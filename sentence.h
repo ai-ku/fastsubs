@@ -4,9 +4,9 @@
 #include "lm.h"
 
 /** Sentences are represented as Token arrays.  The zeroth element is
- * token count.  The first and last elements are SOS and EOS (added by
- * this program, not necessary in the input).  The token count
- * includes the <s> and </s> tags.
+ * token count.  The first and last elements are SOS (<s>) and EOS
+ * (</s>) (added by this program, not necessary in the input).  The
+ * token count includes the <s> and </s> tags.
  */
 typedef Token *Sentence;
 
@@ -19,6 +19,10 @@ typedef Token *Sentence;
  * call to sentence_from_string.  Returns number of tokens.
  */
 guint32 sentence_from_string(Sentence st, char *str, int nmax);
+
+/** sentence_logp(): Calculates the log probability of the j'th token
+ * in sentence s according to model lm 
+ */
 gdouble sentence_logp(Sentence s, int j, LM lm);
 
 #endif
