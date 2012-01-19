@@ -23,6 +23,6 @@ guint32 sentence_from_string(Sentence st, char *str, int nmax);
 /** sentence_logp(): Calculates the log probability of the j'th token
  * in sentence s according to model lm 
  */
-gdouble sentence_logp(Sentence s, int j, LM lm);
+gfloat sentence_logp(Sentence s, int j, LM lm);
 
 #endif

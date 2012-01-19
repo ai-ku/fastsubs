@@ -25,23 +25,23 @@ guint32 sentence_from_string(Sentence st, char *str, int nmax) {
   return ntok;
 }
 
-gdouble sentence_logp(Sentence s, int j, LM lm) {
+gfloat sentence_logp(Sentence s, int j, LM lm) {
   g_assert((j >= 1) && (j <= sentence_size(s)));
   if (j==1) return 0;		/* First token is always SOS */
   int i = j - lm_ngram_order(lm);
   if (i < 0) i = 0;
-  gdouble ll = 0;
+  gfloat ll = 0;
   while (i < j) {
     Token si = s[i];
     s[i] = (guint32) (j - i);	/* ngram order */
-    gdouble lp = lm_logP(lm, &s[i]);
+    gfloat lp = lm_logP(lm, &s[i]);
     if (lp != SRILM_LOG0) {
       ll += lp;
       s[i] = si;
       break;
     } else {
       s[i]--;
-      gdouble lb = lm_logB(lm, &s[i]);
+      gfloat lb = lm_logB(lm, &s[i]);
       if (lb != SRILM_LOG0) {
 	ll += lb;
       }

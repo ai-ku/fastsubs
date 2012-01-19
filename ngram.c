@@ -1,4 +1,5 @@
 #include "foreach.h"
+#include "minialloc.h"
 #include "ngram.h"
 #define MAX_NGRAM_ORDER 1023
 
@@ -11,6 +12,13 @@ Ngram ngram_from_string(char *str) {
   }
   ng[0] = ntok;
   return ngram_copy(ng);
+}
+
+Ngram ngram_copy(Ngram ng) {
+  gsize size = (sizeof(Token) * (ngram_size(ng)+1));
+  Ngram ngcopy = minialloc(size);
+  memcpy(ngcopy, ng, size);
+  return ngcopy;
 }
 
 /** Ngram hash functions */
@@ -31,7 +39,7 @@ static void init_ngram_hash_rnd() {
   }
 }
 
-guint ngram_hash_function(gconstpointer p) {
+guint ngram_hash(gconstpointer p) {
   if (*ngram_hash_rnd == 0) init_ngram_hash_rnd();
   const Token *ng = p;
   guint hash = 0;

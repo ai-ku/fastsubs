@@ -10,11 +10,10 @@
 typedef Token *Ngram;
 
 #define ngram_size(p) ((guint32)(*p))
-#define ngram_copy(p) g_memdup(p,(ngram_size(p)+1)*sizeof(Token))
-#define ngram_free g_free
 
-guint ngram_hash_function(gconstpointer p);
+guint ngram_hash(gconstpointer p);
 gboolean ngram_equal(gconstpointer pa, gconstpointer pb);
 Ngram ngram_from_string(char *str);
-
+Ngram ngram_alloc(int n);
+Ngram ngram_copy(Ngram ng);
 #endif
