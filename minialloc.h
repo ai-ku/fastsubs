@@ -7,6 +7,6 @@
    end. */ 
 
 gpointer minialloc(gsize size);
-void free_all();
+void minialloc_free_all();
 
 #endif

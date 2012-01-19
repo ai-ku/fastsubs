@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <glib.h>
 
 #define BLOCKSIZE (1<<20)
@@ -6,8 +7,8 @@ static gpointer free;
 static gsize remaining;
 
 static void newdata(gpointer olddata) {
-    data = g_slice_alloc(BLOCKSIZE);
-    *((gpointer *)data) = NULL;
+    data = g_malloc(BLOCKSIZE);
+    *((gpointer *)data) = olddata;
     free = data + sizeof(gpointer);
     remaining = BLOCKSIZE - sizeof(gpointer);
 }
@@ -23,6 +24,13 @@ gpointer minialloc(gsize size) {
   return rval;
 }
 
-void free_all() {
-  g_slice_free_chain_with_offset(BLOCKSIZE, data, 0);
+void minialloc_free_all() {
+  int n = 0;
+  while (data != NULL) {
+    gpointer p = *((gpointer*)data);
+    g_free(data);
+    data = p;
+    n++;
+  }
+  fprintf(stderr, "Freed %d blocks\n", n);
 }

@@ -14,6 +14,5 @@ typedef Token *Ngram;
 guint ngram_hash(gconstpointer p);
 gboolean ngram_equal(gconstpointer pa, gconstpointer pb);
 Ngram ngram_from_string(char *str);
-Ngram ngram_alloc(int n);
 Ngram ngram_copy(Ngram ng);
 #endif
