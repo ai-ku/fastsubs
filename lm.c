@@ -7,6 +7,7 @@ static LM lm_alloc() {
   lm->logP = g_hash_table_new(ngram_hash, ngram_equal);
   lm->logB = g_hash_table_new(ngram_hash, ngram_equal);
   lm->order = 0;
+  lm->nvocab = 0;
   return lm;
 }
 
@@ -31,6 +32,9 @@ LM lm_init(char *lmfile) {
     s = strtok(NULL, "\t\n");
     Ngram ng = ngram_from_string(s);
     if (ngram_size(ng) > lm->order) lm->order = ngram_size(ng);
+    for (int i = ngram_size(ng); i > 0; i--) {
+      if (ng[i] > lm->nvocab) lm->nvocab = ng[i];
+    }
     if (g_hash_table_lookup_extended(lm->logP, ng, NULL, NULL)) 
       g_error("Duplicate ngram");
     g_hash_table_insert(lm->logP, ng, fptr);

@@ -7,6 +7,7 @@ typedef struct _LMS {
   GHashTable *logP;
   GHashTable *logB;
   guint order;
+  guint nvocab;
 } *LM; 
 
 LM lm_init(char *lmfile);
