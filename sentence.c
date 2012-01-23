@@ -41,10 +41,7 @@ gfloat sentence_logp(Sentence s, int j, LM lm) {
       break;
     } else {
       s[i]--;
-      gfloat lb = lm_logB(lm, &s[i]);
-      if (lb != SRILM_LOG0) {
-	ll += lb;
-      }
+      ll += lm_logB(lm, &s[i]);
       s[i] = si;
     }
     i++;

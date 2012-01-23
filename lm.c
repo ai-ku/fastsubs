@@ -60,5 +60,5 @@ gfloat lm_logP(LM lm, Ngram ng) {
 
 gfloat lm_logB(LM lm, Ngram ng) {
   gfloat *p = g_hash_table_lookup(lm->logB, ng);
-  return (p == NULL ? SRILM_LOG0 : *p);
+  return (p == NULL ? 0 : *p);
 }
