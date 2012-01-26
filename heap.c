@@ -28,6 +28,7 @@ void heap_insert_max(Heap heap, Token key, gfloat value) {
 }
 
 LMpair heap_delete_min(Heap heap) {
+  g_assert(heap_size(heap) > 0);
   LMpair top = heap[1];
   LMpair bot = heap[heap_size(heap)];
   guint end = --heap_size(heap);
@@ -44,6 +45,7 @@ LMpair heap_delete_min(Heap heap) {
 }
 
 LMpair heap_delete_max(Heap heap) {
+  g_assert(heap_size(heap) > 0);
   LMpair top = heap[1];
   LMpair bot = heap[heap_size(heap)];
   guint end = --heap_size(heap);
