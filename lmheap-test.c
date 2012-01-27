@@ -3,6 +3,7 @@
 #include "lmheap.h"
 #include "procinfo.h"
 #include "minialloc.h"
+#include "heap.h"
 
 int main(int argc, char **argv) {
   char buf[1024];
@@ -24,9 +25,11 @@ int main(int argc, char **argv) {
       Token ng_i = ng[i];
       ng[i] = NULLTOKEN;
       g_message("logP[%d]:", i);
-      LMpair *p = g_hash_table_lookup(h->logP_heap, ng);
-      for (int j = 1; j <= heap_size(p); j++) {
-	g_message("%g\t%s", p[j].logp, token_to_string(p[j].token));
+      Heap p = g_hash_table_lookup(h->logP_heap, ng);
+      if (p != NULL) {
+	for (int j = 1; j <= heap_size(p); j++) {
+	  g_message("%g\t%s", p[j].logp, token_to_string(p[j].token));
+	}
       }
       g_message("logB[%d]:", i);
       p = g_hash_table_lookup(h->logB_heap, ng);
@@ -41,8 +44,6 @@ int main(int argc, char **argv) {
   }
 
   g_message("Destroying LMheap");
-  lmheap_free(h);
-  lm_free(lm);
   minialloc_free_all();
   g_message("done");
 }

@@ -1,7 +1,7 @@
-#include <stdio.h>
 #include <glib.h>
+#include "minialloc.h"
 
-#define BLOCKSIZE (1<<20)
+#define BLOCKSIZE (1<<24)
 static gpointer data;
 static gpointer free;
 static gsize remaining;
@@ -32,5 +32,5 @@ void minialloc_free_all() {
     data = p;
     n++;
   }
-  fprintf(stderr, "Freed %d blocks\n", n);
+  g_message("Freed %d blocks of %d bytes\n", n, BLOCKSIZE);
 }

@@ -11,12 +11,18 @@ Ngram ngram_from_string(char *str) {
     ng[++ntok] = token_from_string(word);
   }
   ng[0] = ntok;
-  return ngram_copy(ng);
+  return ngram_dup(ng);
 }
 
-Ngram ngram_copy(Ngram ng) {
+Ngram ngram_dup(Ngram ng) {
   gsize size = (sizeof(Token) * (ngram_size(ng)+1));
   Ngram ngcopy = minialloc(size);
+  memcpy(ngcopy, ng, size);
+  return ngcopy;
+}
+
+Ngram ngram_cpy(Ngram ngcopy, Ngram ng) {
+  gsize size = (sizeof(Token) * (ngram_size(ng)+1));
   memcpy(ngcopy, ng, size);
   return ngcopy;
 }

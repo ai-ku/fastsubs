@@ -4,10 +4,10 @@
 #include "token.h"
 
 /* heap is an array of token-logp pairs. */
-typedef struct _LMpair {
+typedef struct _Hpair {
   Token token;
   gfloat logp;
-} LMpair, *Heap;
+} Hpair, *Heap;
 
 /* The first element is used to store the count n, so the actual
    elements go from 1..n.  */
@@ -23,8 +23,8 @@ void heap_insert_min(Heap heap, Token key, gfloat value);
 void heap_insert_max(Heap heap, Token key, gfloat value);
 
 /* This deletes the top element of a min/max heap and fixes the rest of the heap. */
-LMpair heap_delete_min(Heap heap);
-LMpair heap_delete_max(Heap heap);
+Hpair heap_delete_min(Heap heap);
+Hpair heap_delete_max(Heap heap);
 
 /* this sorts the min/max heapified array so heap[1] has the max/min
    logp value.  Note that the order of heap[1] is reversed. */

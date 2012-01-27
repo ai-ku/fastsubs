@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
   g_message_init();
   g_message("Loading model file %s", argv[1]);
   LM lm = lm_init(argv[1]);
-  g_message("ngram order = %d", lm_ngram_order(lm));
+  g_message("ngram order = %d", lm->order);
   g_message("logP=%d", g_hash_table_size(lm->logP));
   g_message("logB=%d", g_hash_table_size(lm->logB));
   g_message("==> Enter ngram:");

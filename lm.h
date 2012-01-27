@@ -11,8 +11,6 @@ typedef struct _LMS {
 } *LM; 
 
 LM lm_init(char *lmfile);
-void lm_free(LM lm);
-guint lm_ngram_order(LM lm);
 gfloat lm_logP(LM lm, Ngram ng);
 gfloat lm_logB(LM lm, Ngram ng);
 

@@ -2,25 +2,20 @@
 #include "foreach.h"
 #include "lm.h"
 
-static LM lm_alloc() {
-  LM lm = g_new(struct _LMS, 1);
-  lm->logP = g_hash_table_new(ngram_hash, ngram_equal);
-  lm->logB = g_hash_table_new(ngram_hash, ngram_equal);
-  lm->order = 0;
-  lm->nvocab = 0;
-  return lm;
-}
-
-void lm_free(LM lm) {
-  if (lm != NULL) {
-    if (lm->logP != NULL) g_hash_table_destroy(lm->logP);
-    if (lm->logB != NULL) g_hash_table_destroy(lm->logB);
-    g_free(lm);
-  }
-}
+static LM lm1;
 
 LM lm_init(char *lmfile) {
-  LM lm = lm_alloc();
+  LM lm;
+  if (lm1 == NULL) {
+    lm1 = minialloc(sizeof(struct _LMS));
+    lm = lm1;
+    lm->logP = g_hash_table_new(ngram_hash, ngram_equal);
+    lm->logB = g_hash_table_new(ngram_hash, ngram_equal);
+    lm->order = 0;
+    lm->nvocab = 0;
+  } else {
+    g_error("Only one LM is allowed.");
+  }
   gfloat *fptr;
   foreach_line(str, lmfile) {
     errno = 0;
@@ -47,10 +42,6 @@ LM lm_init(char *lmfile) {
     }
   }
   return lm;
-}
-
-guint lm_ngram_order(LM lm) {
-  return lm->order;
 }
 
 gfloat lm_logP(LM lm, Ngram ng) {

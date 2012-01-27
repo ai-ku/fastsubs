@@ -9,10 +9,11 @@
 
 typedef Token *Ngram;
 
-#define ngram_size(p) ((guint32)(*p))
+#define ngram_size(p) ((p)[0])
 
 guint ngram_hash(gconstpointer p);
 gboolean ngram_equal(gconstpointer pa, gconstpointer pb);
 Ngram ngram_from_string(char *str);
-Ngram ngram_copy(Ngram ng);
+Ngram ngram_dup(Ngram ng);
+Ngram ngram_cpy(Ngram ngcopy, Ngram ng);
 #endif

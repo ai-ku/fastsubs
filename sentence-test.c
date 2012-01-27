@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
   g_message_init();
   g_message("Loading model file %s\n", argv[1]);
   LM lm = lm_init(argv[1]);
-  g_message("ngram order = %d\n==> Enter sentence:\n", lm_ngram_order(lm));
+  g_message("ngram order = %d\n==> Enter sentence:\n", lm->order);
   while(fgets(buf, 1024, stdin)) {
     int n = sentence_from_string(s, buf, 1024);
     for (int i = 1; i <= n; i++) {

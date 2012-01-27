@@ -1,6 +1,7 @@
 #ifndef __LMHEAP_H__
 #define __LMHEAP_H__
 #include "lm.h"
+#include "heap.h"
 
 typedef struct _LMheapS {
   GHashTable *logP_heap;
@@ -8,13 +9,8 @@ typedef struct _LMheapS {
   LM lm;
 } *LMheap;
 
-typedef struct _LMpair {
-  Token token;
-  gfloat logp;
-} LMpair;
-
 LMheap lmheap_init(LM lm);
-void lmheap_free(LMheap h);
-#define heap_size(h) ((h)[0].token)
+Hpair *lmheap_logP(LMheap h, Ngram ng);
+Hpair *lmheap_logB(LMheap h, Ngram ng);
 
 #endif
