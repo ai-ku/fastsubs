@@ -1,3 +1,8 @@
+/* TODO:
+   We need to check how null tokens percolate up the tree.
+   Noting that with logB terms unknown tokens win with 0.
+ */
+
 #define DEBUG 1
 #define _GNU_SOURCE
 #include <math.h>
@@ -14,7 +19,8 @@
 #define hget(h,k) g_hash_table_lookup((h),GUINT_TO_POINTER(k))
 #define hset(h,k) g_hash_table_insert((h),GUINT_TO_POINTER(k),(h))
 
-const Hpair NULLPAIR = {NULLTOKEN,SRILM_LOG0};
+const Hpair LOGP0 = {NULLTOKEN,SRILM_LOG0};
+const Hpair LOGB0 = {NULLTOKEN,0.0};
 
 static LM lm1;
 static LMheap lmheap1;
@@ -67,6 +73,7 @@ int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gfloat plimit, guint nlimit)
   gfloat psum = 0;
   while (nsubs < lm->nvocab) {
     subs[nsubs++] = fs_pop(rootnode, s, j);
+    g_assert(subs[nsubs-1].token != NULLTOKEN);
     gboolean nlimit_ok = (nsubs >= nlimit);
     gboolean plimit_ok = TRUE;
     if (plimit > 0) {
@@ -147,6 +154,7 @@ static Hpair fs_top(FSnode n, Sentence s, int j) {
     n->umax = n->umax - ni_umax + ni->umax;
 
     /* compute logp and insert into heap if not already in hash */
+    g_assert(pi.token != NULLTOKEN);
     if (hget(n->hash, pi.token) == NULL) {
       hset(n->hash, pi.token);
       Token s_j = s[j];
@@ -201,19 +209,22 @@ static void fs_init_alt(FSnode n, Sentence s, int i, int k) {
   }
 }
 
+/* For an alt node the top node is simply the top child with max logp. */
+/* umax should be set to the last popped logp, so not updated here. */
+/* hash also contains the popped tokens, so no update here. */
+/* imax = -1 means did not find top child yet */
+/* imax = nterms means ran out of heap */
+/* 0 <= imax < nterms points to the max child */
+
 static Hpair fs_top_alt(FSnode n) {
   g_assert(n->type == ALT);
-
-  /* For an alt node the top node is simply the top child with max logp. */
-  /* umax should be set to the last popped logp, so not update here. */
-  /* hash also contains the popped tokens, so no update here. */
   if (n->imax == -1) {
     gfloat pmax = SRILM_LOG0;
     for (int i = n->nterms - 1; i >= 0; i--) {
       FSnode ni = &n->terms[i];
       Hpair pi = fs_top_sum(ni);
       /* We do not want to return the same token twice. */
-      while (hget(n->hash, pi.token)) {
+      while ((pi.token != NULLTOKEN) && hget(n->hash, pi.token)) {
 	fs_pop_sum(ni);
 	pi = fs_top_sum(ni);
       }
@@ -222,23 +233,35 @@ static Hpair fs_top_alt(FSnode n) {
 	n->imax = i;
       }
     }
+    if (n->imax == -1) n->imax = n->nterms;
   }
-  g_assert((n->imax >= 0) && (n->imax < n->nterms));
-  FSnode ni = &n->terms[n->imax];
-  Hpair pi = fs_top_sum(ni);
-  return pi;
+  if (n->imax < 0) {
+    g_error("die die die");
+  } else if (n->imax >= n->nterms) {
+    return LOGP0;
+  } else {
+    FSnode ni = &n->terms[n->imax];
+    Hpair pi = fs_top_sum(ni);
+    return pi;
+  }
 }
 
 static Hpair fs_pop_alt(FSnode n) {
+  Hpair pi;
   if (n->imax == -1) {
     fs_top_alt(n);
+  } 
+  if (n->imax < 0) {
+    g_error("die die die");
+  } else if (n->imax == n->nterms) {
+    pi = LOGP0;
+  } else {
+    pi = fs_pop_sum(&n->terms[n->imax]);
+    if (pi.token != NULLTOKEN)
+      hset(n->hash, pi.token);	
+    n->imax = -1;  /* should this be nterms ??? */
   }
-  FSnode ni = &n->terms[n->imax];
-  Hpair pi = fs_pop_sum(ni);
-  n->imax = -1;
   n->umax = pi.logp;
-  hset(n->hash, pi.token);
-  g_assert(pi.token != NULLTOKEN);
   return pi;
 }
 
@@ -304,13 +327,22 @@ static Hpair fs_pop_sum1(FSnode n) {
 
 static Hpair fs_pop_sum(FSnode n) {
   g_assert(n->type == SUM);
-  if (n->nterms == 1) return fs_pop_sum1(n);
-  /* if heap not ready call fs_top() */
-  if ((heap_size(n->heap) == 0) || (heap_top(n->heap).logp < n->umax)) {
-    fs_top_sum(n);
+  if (n->nterms == 1) {
+    return fs_pop_sum1(n);
+  } 
+  Hpair pi = fs_top_sum(n);
+  if (pi.token != NULLTOKEN) {
+    Hpair pj = heap_delete_max(n->heap);
+    g_assert(pi.token == pj.token);
   }
-  return heap_delete_max(n->heap);
+  return pi;
 }
+
+/* n->umax should be equal to the sum of children ni->umax (which
+   itself is equal to the logp of last popped item from ni) plus the
+   offset, therefore an upper bound on how high an unchecked word's
+   logp can be.  If top(n).logp is equal or higher than umax no
+   unchecked word can surpass it. */
 
 static Hpair fs_top_sum(FSnode n) {
   g_assert(n->type == SUM);
@@ -319,12 +351,6 @@ static Hpair fs_top_sum(FSnode n) {
   if (ng1 == NULL) {
     ng1 = minialloc(sizeof(Token) * (1 + lm1->order));
   }
-
-  /* n->umax should be equal to the sum of children ni->umax (which
-     itself is equal to the logp of last popped item from ni) plus the
-     offset, therefore an upper bound on how high an unchecked word's
-     logp can be.  If top(n).logp is equal or higher than umax no
-     unchecked word can surpass it. */
 
   while ((heap_size(n->heap) == 0) || (heap_top(n->heap).logp < n->umax)) {
 
@@ -351,6 +377,7 @@ static Hpair fs_top_sum(FSnode n) {
     n->umax = n->umax - ni_umax + ni->umax;
 
     /* compute logp and insert into heap if not already in hash */
+    g_assert(pi.token != NULLTOKEN);
     if (hget(n->hash, pi.token) == NULL) {
       hset(n->hash, pi.token);
       pi.logp = n->offset;
@@ -407,7 +434,20 @@ static Hpair fs_pop_logp(FSnode n) {
 }
 
 static Hpair fs_top_logp(FSnode n) {
-  return (((n->heap == NULL) || (n->imax > heap_size(n->heap))) ? NULLPAIR : n->heap[n->imax]);
+  Hpair pi;
+  if (n->type == LOGB) {
+    /* logb=0 for ngrams not found, thus most of the vocabulary */
+    /* return unspecific 0 logp answer */
+    pi.token = NULLTOKEN;
+    pi.logp = 0.0;
+  } else if ((n->heap == NULL) || (n->imax > heap_size(n->heap))) {
+    /* logp=SRILM_LOG0 if we ran out of heap in a logp term */
+    pi.token = NULLTOKEN;
+    pi.logp = SRILM_LOG0;
+  } else {
+    pi = n->heap[n->imax];
+  }
+  return pi;
 }
 
 static gfloat fs_lookup(Sentence s, int i, int k, gboolean bow) {
