@@ -26,8 +26,7 @@ guint32 sentence_from_string(Sentence st, char *str, int nmax) {
 }
 
 gfloat sentence_logp(Sentence s, int j, LM lm) {
-  g_assert((j >= 1) && (j <= sentence_size(s)));
-  if (j==1) return 0;		/* First token is always SOS */
+  g_assert((j >= 2) && (j <= sentence_size(s))); /* s[1] always SOS */
   int i = j - lm->order;
   if (i < 0) i = 0;
   gfloat ll = 0;

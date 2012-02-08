@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
   g_message("ngram order = %d\n==> Enter sentence:\n", lm->order);
   while(fgets(buf, 1024, stdin)) {
     int n = sentence_from_string(s, buf, 1024);
-    for (int i = 1; i <= n; i++) {
+    for (int i = 2; i <= n; i++) {
       fprintf(stderr, "%s\t%.9g\n", token_to_string(s[i]), sentence_logp(s, i, lm));
     }
     g_message("==> Enter sentence:\n");

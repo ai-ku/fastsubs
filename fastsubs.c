@@ -3,7 +3,7 @@
    Noting that with logB terms unknown tokens win with 0.
  */
 
-#define DEBUG 1
+#define DEBUG 0
 #define _GNU_SOURCE
 #include <math.h>
 #include <stdio.h>
@@ -111,6 +111,7 @@ static void fs_init(FSnode n, Sentence s, int target) {
   g_hash_table_remove_all(n->hash);
   n->offset = 0.0;
   n->nterms = 0;
+  n->imax = -1;
   Token s_target = s[target];
   s[target] = NULLTOKEN;
   int order = lm1->order;
@@ -130,6 +131,12 @@ static void fs_init(FSnode n, Sentence s, int target) {
   }
   s[target] = s_target;
   n->umax = n->offset;
+  for (int i = 0; i < n->nterms; i++) {
+    FSnode ni = &n->terms[i];
+    Hpair pi = fs_top_alt(ni);
+    g_assert(pi.token != NULLTOKEN);
+    n->umax += pi.logp;
+  }
 }
 
 /** fs_init_alt(n, s, ngram_start, target, ngram_end): Initialize alt
@@ -151,10 +158,10 @@ static void fs_init_alt(FSnode n, Sentence s, int ngram_start, int target, int n
   /* n->type = ALT; */
   /* n->ngram = NULL; */
   /* n->heap = NULL; */
+  /* n->umax = 0.0; */
   g_assert(n->type == ALT);
   g_hash_table_remove_all(n->hash);
   n->imax = -1;
-  n->umax = 0.0;
   n->offset = SRILM_LOG0;
   n->nterms = 0;
   int bow_end = ngram_end - 1;
@@ -215,38 +222,30 @@ static void fs_init_logP(FSnode n, Sentence s, int logp_start, int logp_end, gfl
 static Hpair fs_top(FSnode n, Sentence s, int target) {
   g_assert(n->type == ROOT);
 
-  /* n->umax should be equal to the sum of ni->umax (which itself is
-     equal to the logp of last popped item from ni) plus n->offset,
-     therefore an upper bound on how high the next word's logp can be.
-     If top(n).logp is equal or higher than umax no unchecked word can
-     surpass it. */
+  /* n->umax should be equal to the sum of ni->top (where ni are the
+     child nodes) plus n->offset, therefore an upper bound on how high
+     the next word's logp can be.  If top(n).logp is equal or higher
+     than umax no unchecked word can surpass it. */
 
   while ((heap_size(n->heap) == 0) || (heap_top(n->heap).logp < n->umax)) {
 
     /* find the next word to lookup. ideally this should be the one
-       whose deletion will decrease ni->umax the most.  */
-    gfloat dmax = 0;
-    int imax = -1;
-    for (int i = n->nterms - 1; i >= 0; i--) {
-      FSnode ni = &n->terms[i];
-      Hpair pi = fs_top_alt(ni);
-      if (pi.token == NULLTOKEN) continue;
-      gfloat diff = ni->umax - pi.logp;
-      if (diff >= dmax) {
-	dmax = diff;
-	imax = i;
-      }
+       whose deletion will decrease n->umax the most, but for now we
+       will just pick the first valid child. */
+    FSnode ni;
+    Hpair pi;
+    for (int i = 0; i < n->nterms; i++) {
+      ni = &n->terms[i];
+      pi = fs_top_alt(ni);
+      if (pi.token != NULLTOKEN) break;
     }
-    g_assert(imax >= 0);
+    g_assert(pi.token != NULLTOKEN);
 
     /* update umax (need even if pi.token in hash) */
-    FSnode ni = &n->terms[imax];
-    gfloat ni_umax = ni->umax;	/* save old ni->umax */
-    Hpair pi = fs_pop_alt(ni);	/* this should update ni.umax <- pi.logp */
+    pi = fs_pop_alt(ni);
     g_assert(pi.token != NULLTOKEN);
-    g_assert(ni->umax == pi.logp);
-    g_assert(ni->umax <= ni_umax);
-    n->umax = n->umax - ni_umax + ni->umax;
+    Hpair pi2 = fs_top_alt(ni);
+    n->umax = n->umax - pi.logp + pi2.logp;
 
     /* compute logp and insert into heap if not already in hash */
     if (hget(n->hash, pi.token) == NULL) {
@@ -278,12 +277,11 @@ static Hpair fs_pop(FSnode n, Sentence s, int target) {
 
 /* fs_top_alt(n): 
  * For an alt node the top node is simply the top child with max logp.
- * umax should be set to the last popped logp, so not updated here.
  * hash also contains the popped tokens, so no update here.
  * imax = -1 means did not find top child yet
  * imax = nterms means ran out of heap
  * 0 <= imax < nterms points to the max child
- * offset is a lower-bound on umax, if umax falls below offset just
+ * offset is a lower-bound on top, if top falls below offset just
  * return offset with an unspecified token.
  */
 
@@ -299,7 +297,7 @@ static Hpair fs_top_alt(FSnode n) {
 	fs_pop_logp(ni);
 	pi = fs_top_logp(ni);
       }
-      if (pi.logp > pmax) {
+      if (pi.logp >= pmax) {
 	pmax = pi.logp;
 	n->imax = i;
       }
@@ -330,7 +328,6 @@ static Hpair fs_pop_alt(FSnode n) {
     hset(n->hash, pi.token);
     n->imax = -1;
   }
-  n->umax = pi.logp;
   return pi;
 }
 

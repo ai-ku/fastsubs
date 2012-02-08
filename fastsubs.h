@@ -8,8 +8,7 @@
 typedef enum {
   ROOT,		  /* root level node, representing e.g. abxcd -> abx + bxc + xcd */
   ALT,            /* alternatives e.g. abx -> abx | [ab]bx | [ab][b]x; where [] represents bow */
-  SUM,            /* summation e.g. [bx][x]c -> [bx] + [x] + c */
-  LOGP, LOGB	  /* leaf node e.g. [bx] or abx */
+  LOGP		  /* leaf node e.g. [bx] or abx */
 } NodeType;
 
 typedef struct _FSnode {

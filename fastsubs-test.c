@@ -14,13 +14,12 @@ int main(int argc, char **argv) {
   g_message("ngram order = %d\n==> Enter sentence:\n", lm->order);
   while(fgets(buf, 1024, stdin)) {
     int n = sentence_from_string(s, buf, 1024);
-    for (int i = 1; i <= n; i++) {
-      int nsubs = fastsubs(subs, s, i, lm, 0, 10);
-      printf("%d. %s:", i, token_to_string(s[i]));
+    for (int i = 2; i <= n; i++) {
+      int nsubs = fastsubs(subs, s, i, lm, 0, 100);
+      printf("%s:\n", token_to_string(s[i]));
       for (int j = 0; j < nsubs; j++) {
-	printf(" %s%g", token_to_string(subs[j].token), subs[j].logp);
+	printf("%s\t%.4f\n", token_to_string(subs[j].token), subs[j].logp);
       }
-      printf("\n");
     }
     g_message("==> Enter sentence:\n");
   }
