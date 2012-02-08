@@ -231,15 +231,20 @@ static Hpair fs_top(FSnode n, Sentence s, int target) {
 
     /* find the next word to lookup. ideally this should be the one
        whose deletion will decrease n->umax the most, but for now we
-       will just pick the first valid child. */
+       will just pick the next valid child. */
     FSnode ni;
     Hpair pi;
-    for (int i = 0; i < n->nterms; i++) {
+    int i = n->imax;
+    while (1) {
+      i++;
+      if (i >= n->nterms) i = 0;
       ni = &n->terms[i];
       pi = fs_top_alt(ni);
+      if (i == n->imax) break;
       if (pi.token != NULLTOKEN) break;
     }
     g_assert(pi.token != NULLTOKEN);
+    n->imax = i;
 
     /* update umax (need even if pi.token in hash) */
     pi = fs_pop_alt(ni);
