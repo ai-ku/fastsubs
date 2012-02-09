@@ -8,9 +8,6 @@
 #include <glib.h>
 #include <errno.h>
 #include <stdlib.h>
-extern char *strtok_r(char *s, const char *delim, char **ptrptr);
-extern FILE *popen (__const char *__command, __const char *__modes);
-extern int pclose (FILE *__stream);
 
 /* FOREACH: C needs some good looping macros: */
 
