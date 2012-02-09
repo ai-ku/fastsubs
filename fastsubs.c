@@ -43,9 +43,8 @@ static Hpair fs_top_logp(FSnode n);
 static gfloat fs_lookup(Sentence s, int i, int k, gboolean bow);
 #define fs_lookup_logP(s,i,k) fs_lookup(s,i,k,FALSE)
 #define fs_lookup_logB(s,i,k) fs_lookup(s,i,k,TRUE)
-static void fs_print_node(gpointer data, gpointer user_data);
 
-int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gfloat plimit, guint nlimit) {
+int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit) {
   g_assert((j >= 1) && (j <= sentence_size(s)));
   if (lm1 == NULL) {
     lm1 = lm;
@@ -59,16 +58,17 @@ int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gfloat plimit, guint nlimit)
   fs_print_node(rootnode, NULL);
 #endif
   int nsubs = 0;
-  gfloat psum = 0;
+  gdouble psum = 0.0;
   while (nsubs < lm->nvocab) {
-    subs[nsubs++] = fs_pop(rootnode, s, j);
-    g_assert(subs[nsubs-1].token != NULLTOKEN);
+    Hpair pi = fs_pop(rootnode, s, j);
+    g_assert(pi.token != NULLTOKEN);
+    subs[nsubs++] = pi;
     gboolean nlimit_ok = (nsubs >= nlimit);
     gboolean plimit_ok = TRUE;
     if (plimit > 0) {
-      gfloat lastp = exp10f(subs[nsubs-1].logp);
+      gdouble lastp = exp10(pi.logp);
       psum += lastp;
-      gfloat maxrest = lastp * (lm->nvocab - nsubs);
+      gdouble maxrest = lastp * (lm->nvocab - nsubs);
       plimit_ok = (plimit <= (psum/(psum + maxrest)));
     }
     if (nlimit_ok && plimit_ok) break;
@@ -134,7 +134,10 @@ static void fs_init(FSnode n, Sentence s, int target) {
   for (int i = 0; i < n->nterms; i++) {
     FSnode ni = &n->terms[i];
     Hpair pi = fs_top_alt(ni);
-    g_assert(pi.token != NULLTOKEN);
+    /* pi.token could be NULL if none of the tokens have score above alt.offset */
+    /* even if we manage not to create any empty alt nodes */
+    /* g_assert(pi.token != NULLTOKEN); */
+    /* however the pi.logp should still be a valid upper bound for this node */
     n->umax += pi.logp;
   }
 }
@@ -354,7 +357,7 @@ static Hpair fs_top_logp(FSnode n) {
 }
 
 /* debug fn */
-static void fs_print_node(gpointer data, gpointer user_data) {
+void fs_print_node(gpointer data, gpointer user_data) {
   FSnode node = (FSnode) data;
   if (node->type != ROOT) printf(" ");
   printf("(");

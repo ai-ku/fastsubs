@@ -5,7 +5,10 @@
 #include "lm.h"
 #include "lmheap.h"
 #include "heap.h"
-static gsize dot;
+
+#define NDOT 100000
+#define dot() if (++ndot % NDOT == 0) fprintf(stderr, ".")
+static gsize ndot;
 
 static void lmheap_count(gpointer key, gpointer value, gpointer user_data) {
   Ngram ng = (Ngram) key;
@@ -24,7 +27,7 @@ static void lmheap_count(gpointer key, gpointer value, gpointer user_data) {
     }
     ng[i] = ng_i;
   }
-  if (++dot % 10000 == 0) fprintf(stderr, ".");
+  dot();
 }
 
 static void lmheap_alloc(gpointer key, gpointer value, gpointer user_data) {
@@ -34,7 +37,7 @@ static void lmheap_alloc(gpointer key, gpointer value, gpointer user_data) {
   Heap heap = minialloc(sizeof(Hpair) * (1 + (*iptr)));
   heap_size(heap) = 0;
   g_hash_table_insert(h, ng, heap);
-  if (++dot % 10000 == 0) fprintf(stderr, ".");
+  dot();
 }
 
 static void lmheap_insert(gpointer key, gpointer value, gpointer user_data) {
@@ -49,14 +52,14 @@ static void lmheap_insert(gpointer key, gpointer value, gpointer user_data) {
     g_assert(heap != NULL);
     heap_insert_min(heap, ng_i, *fptr);
   }
-  if (++dot % 10000 == 0) fprintf(stderr, ".");
+  dot();
 }
 
 static void lmheap_sort(gpointer key, gpointer value, gpointer user_data) {
   Heap heap = (Heap) value;
   g_assert(heap != NULL && heap_size(heap) > 0);
   heap_sort_max(heap);
-  if (++dot % 10000 == 0) fprintf(stderr, ".");
+  dot();
 }
 
 LMheap lmheap_init(LM lm) {

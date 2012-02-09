@@ -6,6 +6,7 @@
 #include "fastsubs.h"
 #include "heap.h"
 #include "minialloc.h"
+const char *usage = "Usage: fastsubs [-n <n> | -p <p>] model.lm < input.txt";
 
 int main(int argc, char **argv) {
   g_message_init();
@@ -13,8 +14,8 @@ int main(int argc, char **argv) {
   Token s[1025];
 
   int opt;
-  int opt_n = 10;
-  gfloat opt_p = 0.0;
+  int opt_n = 0;
+  gdouble opt_p = 0.0;
   while ((opt = getopt(argc, argv, "p:n:")) != -1) {
     switch(opt) {
     case 'n':
@@ -24,25 +25,28 @@ int main(int argc, char **argv) {
       opt_p = atof(optarg);
       break;
     default:
-      g_error("Usage: fastsubs -n <n> -p <p> model.lm < corpus.txt\n");
+      g_error(usage);
     }
   }
   if (optind >= argc)
-      g_error("Usage: fastsubs -n <n> -p <p> model.lm < corpus.txt\n");
+      g_error(usage);
+  if ((opt_n == 0) && (opt_p == 0))
+      g_error(usage);
+  g_message("Minimum substitutes -n=%d, minimum probability -p=%g", opt_n, opt_p);
   g_message("Loading model file %s", argv[optind]);
-  LM lm = lm_init(argv[1]);
+  LM lm = lm_init(argv[optind]);
   Hpair *subs = minialloc(lm->nvocab * sizeof(Hpair));
-  g_message("ngram order = %d\n==> Enter sentence:\n", lm->order);
+  g_message("ngram order = %d\n==> Enter sentences:\n", lm->order);
   while(fgets(buf, 1024, stdin)) {
     int n = sentence_from_string(s, buf, 1024);
     for (int i = 2; i <= n; i++) {
       int nsubs = fastsubs(subs, s, i, lm, opt_p, opt_n);
-      printf("%s:\n", token_to_string(s[i]));
+      printf("%s", token_to_string(s[i]));
       for (int j = 0; j < nsubs; j++) {
-	printf("%s\t%.4f\n", token_to_string(subs[j].token), subs[j].logp);
+	printf("\t%s %.4f", token_to_string(subs[j].token), subs[j].logp);
       }
+      printf("\n");
     }
-    g_message("==> Enter sentence:\n");
   }
   minialloc_free_all();
 }

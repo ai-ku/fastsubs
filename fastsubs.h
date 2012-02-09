@@ -34,6 +34,6 @@ typedef struct _FSnode {
  *  satisfied, so just pass 0 for a limit you do not care about.  The
  *  number of entries placed in the subs array is returned.
  */
-int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gfloat plimit, guint nlimit);
+int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit);
 
 #endif
