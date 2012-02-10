@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
       int nsubs = fastsubs(subs, s, i, lm, opt_p, opt_n);
       printf("%s", token_to_string(s[i]));
       for (int j = 0; j < nsubs; j++) {
-	printf("\t%s %.4f", token_to_string(subs[j].token), subs[j].logp);
+	printf("\t%s %.8f", token_to_string(subs[j].token), subs[j].logp);
       }
       printf("\n");
     }
