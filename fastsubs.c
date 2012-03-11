@@ -64,14 +64,14 @@ int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit
     g_assert(pi.token != NULLTOKEN);
     subs[nsubs++] = pi;
     gboolean nlimit_ok = (nsubs >= nlimit);
-    gboolean plimit_ok = TRUE;
-    if (plimit > 0) {
+    gboolean plimit_ok = FALSE;
+    if (plimit < 1.0) {
       gdouble lastp = exp10(pi.logp);
       psum += lastp;
       gdouble maxrest = lastp * (lm->nvocab - nsubs);
       plimit_ok = (plimit <= (psum/(psum + maxrest)));
     }
-    if (nlimit_ok && plimit_ok) break;
+    if (nlimit_ok || plimit_ok) break;
   }
   return nsubs;
 }
