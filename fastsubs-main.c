@@ -40,10 +40,13 @@ int main(int argc, char **argv) {
   LM lm = lm_init(argv[optind]);
   Hpair *subs = minialloc(lm->nvocab * sizeof(Hpair));
   g_message("ngram order = %d\n==> Enter sentences:\n", lm->order);
+  int fs_ncall = 0;
+  int fs_nsubs = 0;
   while(fgets(buf, BUF, stdin)) {
     int n = sentence_from_string(s, buf, SMAX);
     for (int i = 2; i <= n; i++) {
       int nsubs = fastsubs(subs, s, i, lm, opt_p, opt_n);
+      fs_ncall++; fs_nsubs += nsubs;
       printf("%s", token_to_string(s[i]));
       for (int j = 0; j < nsubs; j++) {
 	printf("\t%s %.8f", token_to_string(subs[j].token), subs[j].logp);
@@ -52,4 +55,6 @@ int main(int argc, char **argv) {
     }
   }
   minialloc_free_all();
+  g_message("calls=%d subs/call=%g pops/call=%g", 
+	    fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
 }

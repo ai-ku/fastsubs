@@ -44,6 +44,8 @@ static gfloat fs_lookup(Sentence s, int i, int k, gboolean bow);
 #define fs_lookup_logP(s,i,k) fs_lookup(s,i,k,FALSE)
 #define fs_lookup_logB(s,i,k) fs_lookup(s,i,k,TRUE)
 
+guint fs_niter = 0;		/* number of pops for performance analysis */
+
 int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit) {
   g_assert((j >= 1) && (j <= sentence_size(s)));
   if (lm1 == NULL) {
@@ -231,6 +233,7 @@ static Hpair fs_top(FSnode n, Sentence s, int target) {
      than umax no unchecked word can surpass it. */
 
   while ((heap_size(n->heap) == 0) || (heap_top(n->heap).logp < n->umax)) {
+    fs_niter++;
 
     /* find the next word to lookup. ideally this should be the one
        whose deletion will decrease n->umax the most, but for now we

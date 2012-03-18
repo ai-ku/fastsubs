@@ -36,4 +36,6 @@ typedef struct _FSnode {
  */
 int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit);
 
+extern guint fs_niter;		/* number of pops for performance analysis */
+
 #endif
