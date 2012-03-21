@@ -64,34 +64,16 @@ static void lmheap_sort(gpointer key, gpointer value, gpointer user_data) {
 
 LMheap lmheap_init(LM lm) {
   g_message("lmheap_init start");
-  LMheap h = minialloc(sizeof(struct _LMheapS));
-  h->lm = lm;
-  h->logP_heap = g_hash_table_new(ngram_hash, ngram_equal);
-  h->logB_heap = g_hash_table_new(ngram_hash, ngram_equal);
+  LMheap h = g_hash_table_new(ngram_hash, ngram_equal);
   g_message("count logP");
-  g_hash_table_foreach(lm->logP, lmheap_count, h->logP_heap);
-  g_message("count logB");
-  g_hash_table_foreach(lm->logB, lmheap_count, h->logB_heap);
+  g_hash_table_foreach(lm->logP, lmheap_count, h);
   g_message("alloc logP_heap");
-  g_hash_table_foreach(h->logP_heap, lmheap_alloc, h->logP_heap);
-  g_message("alloc logB_heap");
-  g_hash_table_foreach(h->logB_heap, lmheap_alloc, h->logB_heap);
+  g_hash_table_foreach(h, lmheap_alloc, h);
   g_message("insert logP");
-  g_hash_table_foreach(lm->logP, lmheap_insert, h->logP_heap);
-  g_message("insert logB");
-  g_hash_table_foreach(lm->logB, lmheap_insert, h->logB_heap);
+  g_hash_table_foreach(lm->logP, lmheap_insert, h);
   g_message("sort logP_heap");
-  g_hash_table_foreach(h->logP_heap, lmheap_sort, NULL);
-  g_message("sort logB_heap");
-  g_hash_table_foreach(h->logB_heap, lmheap_sort, NULL);
+  g_hash_table_foreach(h, lmheap_sort, NULL);
   g_message("lmheap_init done");
   return h;
 }
 
-Heap lmheap_logP(LMheap h, Ngram ng) {
-  return g_hash_table_lookup(h->logP_heap, ng);
-}
-
-Heap lmheap_logB(LMheap h, Ngram ng) {
-  return g_hash_table_lookup(h->logB_heap, ng);
-}
