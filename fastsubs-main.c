@@ -13,7 +13,7 @@
 
 
 int main(int argc, char **argv) {
-  const char *usage = "Usage: fastsubs [-n <n> | -p <p>] model.lm < input.txt";
+  const char *usage = "Usage: fastsubs [-n <n> | -p <p>] model.lm[.gz] < input.txt";
   g_message_init();
   char buf[BUF];
   Token s[SMAX+1];
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
   }
   if (optind >= argc)
       g_error(usage);
-  g_message("Minimum substitutes -n=%d, or minimum probability -p=%g", opt_n, opt_p);
+  g_message("Get substitutes until count=%d OR probability=%g", opt_n, opt_p);
   g_message("Loading model file %s", argv[optind]);
   LM lm = lm_init(argv[optind]);
   Hpair *subs = minialloc(lm->nvocab * sizeof(Hpair));
