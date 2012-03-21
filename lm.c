@@ -16,8 +16,16 @@ LM lm_init(char *lmfile) {
   } else {
     g_error("Only one LM is allowed.");
   }
+
+  char *path = malloc(strlen(lmfile) + 10);
+  if (strstr(lmfile, ".gz")) {
+    sprintf(path, "|zcat %s", lmfile);
+  } else {
+    strcpy(path, lmfile);
+  }
+
   gfloat *fptr;
-  foreach_line(str, lmfile) {
+  foreach_line(str, path) {
     errno = 0;
     if (*str == '\n' || *str == '\\' || *str == 'n') continue;
     char *s = strtok(str, "\t");
