@@ -1,8 +1,3 @@
-/* TODO:
-   We need to check how null tokens percolate up the tree.
-   Noting that with logB terms unknown tokens win with 0.
- */
-
 #define DEBUG 0
 #define _GNU_SOURCE
 #include <math.h>
@@ -16,11 +11,7 @@
 #include "fastsubs.h"
 #include "heap.h"
 
-#define hget(h,k) g_hash_table_lookup((h),GUINT_TO_POINTER(k))
-#define hset(h,k) g_hash_table_insert((h),GUINT_TO_POINTER(k),(h))
-
-const Hpair LOGP0 = {NULLTOKEN,SRILM_LOG0};
-const Hpair LOGB0 = {NULLTOKEN,0.0};
+guint fs_niter = 0;		/* number of pops for performance analysis */
 
 static LM lm1;
 static LMheap lmheap1;
@@ -44,7 +35,9 @@ static gfloat fs_lookup(Sentence s, int i, int k, gboolean bow);
 #define fs_lookup_logP(s,i,k) fs_lookup(s,i,k,FALSE)
 #define fs_lookup_logB(s,i,k) fs_lookup(s,i,k,TRUE)
 
-guint fs_niter = 0;		/* number of pops for performance analysis */
+#define hget(h,k) g_hash_table_lookup((h),GUINT_TO_POINTER(k))
+#define hset(h,k) g_hash_table_insert((h),GUINT_TO_POINTER(k),(h))
+
 
 int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit) {
   g_assert((j >= 1) && (j <= sentence_size(s)));
@@ -219,7 +212,7 @@ static void fs_init_logP(FSnode n, Sentence s, int logp_start, int logp_end, gfl
   n->heap = NULL;
   Token s_logp_start_1 = s[logp_start - 1];
   s[logp_start-1] = logp_end - logp_start + 1;
-  g_hash_table_lookup_extended(lmheap1->logP_heap, &s[logp_start - 1], (gpointer*) &n->ngram, (gpointer*) &n->heap);
+  g_hash_table_lookup_extended(lmheap1, &s[logp_start - 1], (gpointer*) &n->ngram, (gpointer*) &n->heap);
   s[logp_start-1] = s_logp_start_1;
 }
 
