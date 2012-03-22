@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
   g_message_init();
   char buf[BUF];
   Token s[SMAX+1];
+  char *w[SMAX+1];
 
   int opt;
   guint opt_n = NMAX;
@@ -43,11 +44,11 @@ int main(int argc, char **argv) {
   int fs_ncall = 0;
   int fs_nsubs = 0;
   while(fgets(buf, BUF, stdin)) {
-    int n = sentence_from_string(s, buf, SMAX);
+    int n = sentence_from_string(s, buf, SMAX, w);
     for (int i = 2; i <= n; i++) {
       int nsubs = fastsubs(subs, s, i, lm, opt_p, opt_n);
       fs_ncall++; fs_nsubs += nsubs;
-      printf("%s", token_to_string(s[i]));
+      printf(w[i]);
       for (int j = 0; j < nsubs; j++) {
 	printf("\t%s %.8f", token_to_string(subs[j].token), subs[j].logp);
       }

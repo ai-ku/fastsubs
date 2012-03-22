@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
   Hpair *subs = minialloc(lm->nvocab * sizeof(Hpair));
   g_message("ngram order = %d\n==> Enter sentence:\n", lm->order);
   while(fgets(buf, 1024, stdin)) {
-    int n = sentence_from_string(s, buf, 1024);
+    int n = sentence_from_string(s, buf, 1024, NULL);
     for (int i = 2; i <= n; i++) {
       int nsubs = fastsubs(subs, s, i, lm, 0, 100);
       printf("%s:\n", token_to_string(s[i]));
