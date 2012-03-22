@@ -16,9 +16,11 @@ typedef Token *Sentence;
  * hold nmax+1 elements.  Words that are not already defined are
  * replaced with <unk>.  Since we use a single hash for the vocabulary
  * this only works if there is a single lm loaded before the first
- * call to sentence_from_string.  Returns number of tokens.
+ * call to sentence_from_string.  The last argument (if not NULL) is
+ * for storing the original strings for the words.  Returns number of
+ * tokens.
  */
-guint32 sentence_from_string(Sentence st, char *str, int nmax);
+guint32 sentence_from_string(Sentence st, char *str, int nmax, char **w);
 
 /** sentence_logp(): Calculates the log probability of the j'th token
  * in sentence s according to model lm 

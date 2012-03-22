@@ -2,26 +2,33 @@
 #include "foreach.h"
 #include "sentence.h"
 
+#define SOSTAG "<s>"
+#define EOSTAG "</s>"
+#define UNKTAG "<unk>"
+
 static Token SOS, EOS, UNK;
 
 static void init_special_tokens() {
-  SOS = token_from_string("<s>");
-  EOS = token_from_string("</s>");
-  UNK = token_from_string("<unk>");
+  SOS = token_from_string(SOSTAG);
+  EOS = token_from_string(EOSTAG);
+  UNK = token_from_string(UNKTAG);
 }
 
-guint32 sentence_from_string(Sentence st, char *str, int nmax) {
+guint32 sentence_from_string(Sentence st, char *str, int nmax, char **w) {
   if (SOS == 0) init_special_tokens();
   guint32 ntok = 0;
   g_assert(ntok < nmax);
   st[++ntok] = SOS;
+  if (w != NULL) w[ntok] = SOSTAG;
   foreach_token(word, str) {
     Token wtok = token_try_string(word);
     g_assert(ntok < nmax);
     st[++ntok] = (wtok == 0 ? UNK : wtok);
+    if (w != NULL) w[ntok] = word;
   }
   g_assert(ntok < nmax);
   st[++ntok] = EOS;
+  if (w != NULL) w[ntok] = EOSTAG;
   st[0] = ntok;
   return ntok;
 }
