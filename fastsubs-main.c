@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     for (int i = 2; i <= n; i++) {
       int nsubs = fastsubs(subs, s, i, lm, opt_p, opt_n);
       fs_ncall++; fs_nsubs += nsubs;
-      printf(w[i]);
+      fputs(w[i], stdout);
       for (int j = 0; j < nsubs; j++) {
 	printf("\t%s %.8f", token_to_string(subs[j].token), subs[j].logp);
       }
