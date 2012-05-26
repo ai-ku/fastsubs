@@ -40,6 +40,7 @@ static gfloat fs_lookup(Sentence s, int i, int k, gboolean bow);
 
 
 int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit) {
+     int temp;
   g_assert((j >= 1) && (j <= sentence_size(s)));
   if (lm1 == NULL) {
     lm1 = lm;
