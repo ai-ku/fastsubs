@@ -31,11 +31,11 @@ int main(int argc, char **argv) {
       opt_p = atof(optarg);
       break;
     default:
-      g_error(usage);
+      g_error("%s", usage);
     }
   }
   if (optind >= argc)
-      g_error(usage);
+    g_error("%s", usage);
   g_message("Get substitutes until count=%d OR probability=%g", opt_n, opt_p);
   g_message("Loading model file %s", argv[optind]);
   LM lm = lm_init(argv[optind]);

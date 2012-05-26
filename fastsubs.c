@@ -367,7 +367,7 @@ void fs_print_node(gpointer data, gpointer user_data) {
     for (int i = 1; i <= ngram_size(node->ngram); i++) {
       if (i > 1) printf(" ");
       if (node->ngram[i] == NULLTOKEN) printf("_");
-      else printf(token_to_string(node->ngram[i]));
+      else printf("%s", token_to_string(node->ngram[i]));
     }
     printf("\"");
   }
