@@ -1,0 +1,19 @@
+FASTSUBS		            Copyright (c) 2012, Deniz Yuret
+
+Please see the file LICENSE for terms of use.  A description of the
+algorithm can be found in http://arxiv.org/abs/1205.5407v1.  To
+compile you need the glib2 library.  Otherwise everything is standard
+C, so just typing make should give you an executable.
+
+Usage: fastsubs [-n <n> | -p <p>] model.lm[.gz] < input.txt
+
+Fastsubs is a program that finds the most likely substitutes for words
+in input.txt using the language model in model.lm (ARPA format).  The
+number of substitutes is controlled by two parameters: -n specifies
+the number of substitutes for each word, -p specifies a threshold on
+the sum of the substitute probabilities.  The program stops generating
+substitutes for a word when either limit is satisfied.  The output has
+an input word and its substitutes with unnormalized log probabilities
+in the following format:
+
+word <tab> sub1 <space> lprob1 <tab> sub2 <space> lprob2 <tab> ...
