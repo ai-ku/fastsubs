@@ -5,6 +5,7 @@
 #include "sentence.h"
 #include "heap.h"
 
+/**Typedefs*/
 typedef enum {
   ROOT,		  /* root level node, representing e.g. abxcd -> abx + bxc + xcd */
   ALT,            /* alternatives e.g. abx -> abx | [ab]bx | [ab][b]x; where [] represents bow */
