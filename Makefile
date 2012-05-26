@@ -56,4 +56,5 @@ minialloc.o: minialloc.c minialloc.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	-rm *.o fastsubs fastsubs-test lmheap-test sentence-test lm-test
+	-rm -f *.o fastsubs fastsubs-test lmheap-test sentence-test lm-test
+
