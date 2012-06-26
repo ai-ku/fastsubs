@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-O3 -D_XOPEN_SOURCE -Wall -std=c99 -I. `pkg-config --cflags glib-2.0`
 LIBS=`pkg-config --libs glib-2.0` -lm
 
-all: fastsubs
+all: fastsubs wordsub
 
 fastsubs: fastsubs-main.o fastsubs.o lm.o ngram.o minialloc.o sentence.o lmheap.o heap.o
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
@@ -55,6 +55,9 @@ heap.o: heap.c heap.h token.h
 minialloc.o: minialloc.c minialloc.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
+wordsub: wordsub.o
+	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
+
 clean:
-	-rm -f *.o fastsubs fastsubs-test lmheap-test sentence-test lm-test
+	-rm -f *.o fastsubs fastsubs-test lmheap-test sentence-test lm-test wordsub
 
