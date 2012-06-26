@@ -19,7 +19,7 @@ LM lm_init(char *lmfile) {
 
   char *path = malloc(strlen(lmfile) + 10);
   if (strstr(lmfile, ".gz")) {
-    sprintf(path, "|zcat %s", lmfile);
+    sprintf(path, "<zcat %s", lmfile);
   } else {
     strcpy(path, lmfile);
   }
