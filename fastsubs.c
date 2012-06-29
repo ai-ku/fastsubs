@@ -226,7 +226,6 @@ static Hpair fs_top(FSnode n, Sentence s, int target) {
      than umax no unchecked word can surpass it. */
 
   while ((heap_size(n->heap) == 0) || (heap_top(n->heap).logp < n->umax)) {
-    fs_niter++;
 
     /* find the next word to lookup. ideally this should be the one
        whose deletion will decrease n->umax the most, but for now we
@@ -265,6 +264,7 @@ static Hpair fs_top(FSnode n, Sentence s, int target) {
       }
       s[target] = s_target;
       heap_insert_max(n->heap, pi.token, pi.logp);
+      fs_niter++;
     }
   }
 
