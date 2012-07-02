@@ -21,6 +21,10 @@ C, so just typing make should give you an executable.
 Other test and utility executables that can be built using the
 Makefile:
 
+* subs: Slow subs algorithm that computes the probability for each
+  word in the vocabulary as a candidate substitute.  The top K words
+  and their probabilities should match the fastsubs output.
+
 * wordsub: Takes the output of fastsubs and samples random substitutes
   for each word.
 
