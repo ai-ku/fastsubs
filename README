@@ -17,3 +17,24 @@ Please see the file LICENSE for terms of use.  A description of the
 algorithm can be found in http://arxiv.org/abs/1205.5407v1.  To
 compile you need the glib2 library.  Otherwise everything is standard
 C, so just typing make should give you an executable.
+
+Other test and utility executables that can be built using the
+Makefile:
+
+* wordsub: Takes the output of fastsubs and samples random substitutes
+  for each word.
+
+* fastsubs-test: Takes a model file and interactively runs fastsubs on
+  sentences typed by the user.
+
+* lmheap-test: Takes a model file and tests the lmheap data structure
+  by interactively reading n-grams from the user and printing out the
+  contents of the heap for each position.
+
+* sentence-test: Takes a model file and tests the sentence and lm data
+  structures by reading sentences from the user and printing out logp
+  for each word.
+
+* lm-test: Takes a model file and tests the lm data structure by
+  reading n-grams from the user and printing out their logp and
+  back-off weights.
