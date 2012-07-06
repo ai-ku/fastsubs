@@ -269,8 +269,8 @@ void logL2_all(Token *s, int j, LM lm, gdouble *ll) {
 int main(int argc, char *argv[]) {
   static Token s[MAX_SENTENCE_LEN];
   g_message_init();
-  g_message(rcsid);
-  if (argc != 2) g_error(help);
+  g_message("%s", rcsid);
+  if (argc != 2) g_error("%s", help);
   char *lmfile = argv[1];
 
   g_message("Reading language model from %s...", lmfile);
