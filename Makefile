@@ -68,5 +68,4 @@ subs.o: subs.c foreach.h procinfo.h ghashx.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	-rm -f *.o fastsubs fastsubs-test lmheap-test sentence-test lm-test wordsub
-
+	-rm -f *.o fastsubs fastsubs-test lmheap-test sentence-test lm-test wordsub subs
