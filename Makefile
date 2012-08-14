@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-O3 -D_XOPEN_SOURCE -Wall -std=c99 -I. `pkg-config --cflags glib-2.0`
-LIBS=`pkg-config --libs glib-2.0` -lm
+LIBS=`pkg-config --libs glib-2.0` -lm -lz
 
 all: fastsubs wordsub subs
 

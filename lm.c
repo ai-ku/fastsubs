@@ -1,5 +1,6 @@
-#include "minialloc.h"
+#include <zlib.h>
 #include "foreach.h"
+#include "minialloc.h"
 #include "lm.h"
 
 static LM lm1;
