@@ -22,6 +22,7 @@ guint32 sentence_from_string(Sentence st, char *str, int nmax, char **w) {
   if (w != NULL) w[ntok] = SOSTAG;
   foreach_token(word, str) {
     Token wtok = token_try_string(word);
+    if ((wtok == SOS) || (wtok == EOS)) continue;
     g_assert(ntok < nmax);
     st[++ntok] = (wtok == 0 ? UNK : wtok);
     if (w != NULL) w[ntok] = word;
