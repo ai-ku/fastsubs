@@ -7,13 +7,10 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License at <http://www.gnu.org/licenses/> for details.
  */
 
 #ifndef __FOREACH_H__
@@ -26,26 +23,33 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
-#define LINE (1<<20)
 
 /* foreach_line(str, file): iterates with str = each line of file */
 /* Use file = path string for a regular file */
-/* Use file = empty string to represent stdin */
-/* Use file = "< cmd" to represent the output of a command */
+/* Use file = NULL or empty string (deprecated) to read stdin */
+/* Use file = "< cmd" or "| cmd" (deprecated) to read the output of a command */
+/* To support compressed files include zlib.h before foreach.h and compile with -lz */
 
-#define _myopen(f) ((*(f)==0)?stdin:(*(f)=='<')?popen((f)+1,"r"):fopen((f),"r"))
-#define _myclose(f,fp) ((*(f)==0)?0:(*(f)=='<')?pclose(fp):fclose(fp))
+#define _LINE (1<<20)
+#define _ftype(f) ((((f)==NULL)||(*(f)==0)) ? 1 : ((*(f)=='<')||(*(f)=='|')) ? -1 : 0)
 
-#define foreach_line(str, fname)\
-  errno = 0; \
-  for (FILE *_fp = _myopen(fname); \
+#ifdef ZLIB_H
+#define _myopen(f,t) ((t==1) ? stdin : (t==-1) ? popen((f)+1,"r") : gzopen((f),"r"))
+#define _myclose(p,t) ((t==1) ? 0 : (t==-1) ? pclose(p) : gzclose(p))
+#define _fgets(s,n,p,t) ((t) ? fgets(s,n,p) : gzgets(p,s,n))
+#else
+#define _myopen(f,t) ((t==1) ? stdin : (t==-1) ? popen((f)+1,"r") : fopen((f),"r"))
+#define _myclose(p,t) ((t==1) ? 0 : (t==-1) ? pclose(p) : fclose(p))
+#define _fgets(s,n,p,t) fgets(s,n,p)
+#endif
+
+#define foreach_line(str, fname) \
+  for (char str[_LINE], _ft = _ftype(fname), \
+	 *_fp = (str[_LINE-1] = 1, errno = 0, (char*) _myopen(fname, _ft)); \
        (_fp != NULL) || (errno && (perror(fname), exit(errno), 0)); \
-       _fp = (_myclose(fname, _fp), NULL)) \
-  for (char str[LINE];\
-       ((str[LINE - 1] = -1) &&\
-        fgets(str, LINE, _fp) &&\
-        ((str[LINE - 1] != 0) ||\
-         (perror("Line too long"), exit(-1), 0))); )
+       _fp = (_myclose((FILE*)_fp, _ft), NULL)) \
+    while ((_fgets(str, _LINE, (FILE*)_fp, _ft) != NULL) && \
+	   (str[_LINE-1] || (perror("Line too long"), exit(-1), 0)))
 
 #define foreach_token(tok, str)\
   for (char *_ptr = NULL, *(tok) = strtok_r((str), " \t\n\r\f\v", &_ptr);\
@@ -63,7 +67,7 @@
        (var = *_p) != 0; _p++)
 
 #ifdef __G_LIB_H__
-#define foreach(type, var, array)\
+#define foreach_type(type, var, array)\
   for (register type (var), *_p = (type*)(array)->pdata;\
        _p != NULL; _p = NULL)\
   for (register int _i = 0, _l = (array)->len;\
