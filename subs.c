@@ -8,6 +8,7 @@ const char *help = "subs lmfile < text > output";
 #include <stdlib.h>
 #include <getopt.h>
 #include <glib.h>
+#include <zlib.h>
 #include "foreach.h"
 #include "procinfo.h"
 #include "ghashx.h"
@@ -182,7 +183,7 @@ LM read_lm(char *lmfile) {
   Token ng[MAX_NGRAM_ORDER + 1];
   LM lm = lm_new();
   Hash ht = lm->lookup;
-  foreach_line(str, lmfile) {
+  foreach_line(str, lmfile){       
     if (*str == '\n' || *str == '\\' || *str == 'n') continue;
     errno = 0;
     LogProb lp = logprob_new(0, 0);
@@ -283,11 +284,12 @@ int main(int argc, char *argv[]) {
     int n = sentence_from_string(s, str, MAX_SENTENCE_LEN);
     for (int i = 1; i < n; i++) {
       logL2_all(s, i, lm, ll);
-      printf("%s_%g", token_to_string(s[i]), ll[s[i]]);
+      //      printf("%s_%g", token_to_string(s[i]), ll[s[i]]);
+      printf("%s", token_to_string(s[i]));
       for (Token w = 1; w <= lm->maxtoken; w++) {
-	if (w != s[i]) {
-	  printf(" %s_%g", token_to_string(w), ll[w]);
-	}
+           //	if (w != s[i]) {
+	  printf("\t%s %.8f", token_to_string(w), ll[w]);
+       //	}
       }
       printf("\n");
     }
