@@ -8,7 +8,6 @@ const char *usage = "Usage: wordsub [-s seed] < input > output\n"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <zlib.h>
 #include "foreach.h"
 
 int main(int argc, char **argv) {
