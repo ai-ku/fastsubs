@@ -1,7 +1,8 @@
 #include <glib.h>
 #include "minialloc.h"
 
-#define BLOCKSIZE (1<<25)
+//#define BLOCKSIZE (1<<25)
+#define BLOCKSIZE 30000000
 static gpointer data;
 static gpointer free;
 static gsize remaining;
