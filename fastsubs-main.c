@@ -39,6 +39,11 @@ int main(int argc, char **argv) {
   g_message("Get substitutes until count=%d OR probability=%g", opt_n, opt_p);
   g_message("Loading model file %s", argv[optind]);
   LM lm = lm_init(argv[optind]);
+  g_message("vocab:%d", lm->nvocab);
+  if (lm->nvocab < opt_n){
+       opt_n = lm->nvocab - 1;
+       g_message("[Number of substitutes > vocabulary size] set to maximum substitute number=%d", opt_n - 1);  
+  }
   Hpair *subs = minialloc(lm->nvocab * sizeof(Hpair));
   g_message("ngram order = %d\n==> Enter sentences:\n", lm->order);
   int fs_ncall = 0;
