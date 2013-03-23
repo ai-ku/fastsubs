@@ -54,9 +54,11 @@ int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit
 #endif
   int nsubs = 0;
   gdouble psum = 0.0;
-  while (nsubs < lm->nvocab) {
+  while (nsubs < lm->nvocab - 1) { /* The -1 is for <s> */
     Hpair pi = fs_pop(rootnode, s, j);
-    g_assert(pi.token != NULLTOKEN);
+    /* We can have pi.token == NULLTOKEN earlier than nvocab */
+    /* g_assert(pi.token != NULLTOKEN); */
+    if (pi.token == NULLTOKEN) break;
     subs[nsubs++] = pi;
     gboolean nlimit_ok = (nsubs >= nlimit);
     gboolean plimit_ok = FALSE;
@@ -301,7 +303,7 @@ static Hpair fs_top_alt(FSnode n) {
 	fs_pop_logp(ni);
 	pi = fs_top_logp(ni);
       }
-      if (pi.logp >= pmax) {
+      if (pi.logp > pmax) {
 	pmax = pi.logp;
 	n->imax = i;
       }

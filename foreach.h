@@ -30,7 +30,7 @@
 /* Use file = "< cmd" or "| cmd" (deprecated) to read the output of a command */
 /* To support compressed files include zlib.h before foreach.h and compile with -lz */
 
-#define _LINE (1<<30)
+#define _LINE (1<<20)
 #define _ftype(f) ((((f)==NULL)||(*(f)==0)) ? 1 : ((*(f)=='<')||(*(f)=='|')) ? -1 : 0)
 
 #ifdef ZLIB_H
