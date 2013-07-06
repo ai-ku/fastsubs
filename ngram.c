@@ -31,14 +31,16 @@ Ngram ngram_cpy(Ngram ngcopy, Ngram ng) {
 
 static guint ngram_hash_rnd[1 + MAX_NGRAM_ORDER];
 
+extern GRand *g_lib_rgen;
+
 static void init_ngram_hash_rnd() {
   guint32 r;
   if (*ngram_hash_rnd == 0) {
     for (int i = MAX_NGRAM_ORDER; i >= 0; i--) {
-      /* g_random_int(): Return a random guint32 equally distributed
+      /* g_rand_int(GRand*): Return a random guint32 equally distributed
 	 over the range [0..2^32-1]. */
-      do { 
-	r = g_random_int(); 
+      do {
+		r = g_rand_int(g_lib_rgen);
       } while (r == 0);
       ngram_hash_rnd[i] = r;
     }

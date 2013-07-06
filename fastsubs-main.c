@@ -13,7 +13,8 @@
 
 
 int main(int argc, char **argv) {
-  const char *usage = "Usage: fastsubs [-n <n> | -p <p>] model.lm[.gz] < input.txt";
+  const char *usage = "Usage: fastsubs [-s seed] [-n <n> | -p <p>] model.lm[.gz] < input.txt\n"
+	"Default seed is 0";
   g_message_init();
   char buf[BUF];
   Token s[SMAX+1];
@@ -22,7 +23,8 @@ int main(int argc, char **argv) {
   int opt;
   guint opt_n = NMAX;
   gdouble opt_p = PMAX;
-  while ((opt = getopt(argc, argv, "p:n:")) != -1) {
+  guint opt_s = 0; /* default seed */
+  while ((opt = getopt(argc, argv, "p:n:s:")) != -1) {
     switch(opt) {
     case 'n':
       opt_n = atoi(optarg);
@@ -30,19 +32,26 @@ int main(int argc, char **argv) {
     case 'p':
       opt_p = atof(optarg);
       break;
+    case 's':
+      opt_s = atoi(optarg);
+      break;
     default:
       g_error("%s", usage);
     }
   }
   if (optind >= argc)
     g_error("%s", usage);
+
+  /* seeded generator from glib */
+  g_lib_rgen = g_rand_new_with_seed(opt_s);
+
   g_message("Get substitutes until count=%d OR probability=%g", opt_n, opt_p);
   g_message("Loading model file %s", argv[optind]);
   LM lm = lm_init(argv[optind]);
   g_message("vocab:%d", lm->nvocab);
   if (lm->nvocab < opt_n){
        opt_n = lm->nvocab - 1;
-       g_message("[Number of substitutes > vocabulary size] set to maximum substitute number=%d", opt_n - 1);  
+       g_message("[Number of substitutes > vocabulary size] set to maximum substitute number=%d", opt_n - 1);
   }
   Hpair *subs = minialloc(lm->nvocab * sizeof(Hpair));
   g_message("ngram order = %d\n==> Enter sentences:\n", lm->order);
@@ -63,4 +72,6 @@ int main(int argc, char **argv) {
   minialloc_free_all();
   g_message("calls=%d subs/call=%g pops/call=%g", 
 	    fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
+
+  g_rand_free(g_lib_rgen);
 }
