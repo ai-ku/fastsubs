@@ -14,7 +14,7 @@
 
 int main(int argc, char **argv) {
   const char *usage = "Usage: fastsubs [-s seed] [-n <n> | -p <p>] model.lm[.gz] < input.txt\n"
-	"Default seed is 0";
+    "Default seed is 0";
   g_message_init();
   char buf[BUF];
   Token s[SMAX+1];
@@ -26,17 +26,17 @@ int main(int argc, char **argv) {
   guint opt_s = 0; /* default seed */
   while ((opt = getopt(argc, argv, "p:n:s:")) != -1) {
     switch(opt) {
-    case 'n':
-      opt_n = atoi(optarg);
-      break;
-    case 'p':
-      opt_p = atof(optarg);
-      break;
-    case 's':
-      opt_s = atoi(optarg);
-      break;
-    default:
-      g_error("%s", usage);
+      case 'n':
+        opt_n = atoi(optarg);
+        break;
+      case 'p':
+        opt_p = atof(optarg);
+        break;
+      case 's':
+        opt_s = atoi(optarg);
+        break;
+      default:
+        g_error("%s", usage);
     }
   }
   if (optind >= argc)
@@ -50,8 +50,8 @@ int main(int argc, char **argv) {
   LM lm = lm_init(argv[optind]);
   g_message("vocab:%d", lm->nvocab);
   if (lm->nvocab < opt_n){
-       opt_n = lm->nvocab - 1;
-       g_message("[Number of substitutes > vocabulary size] set to maximum substitute number=%d", opt_n - 1);
+    opt_n = lm->nvocab - 1;
+    g_message("[Number of substitutes > vocabulary size] set to maximum substitute number=%d", opt_n - 1);
   }
   Hpair *subs = minialloc(lm->nvocab * sizeof(Hpair));
   g_message("ngram order = %d\n==> Enter sentences:\n", lm->order);
@@ -64,14 +64,14 @@ int main(int argc, char **argv) {
       fs_ncall++; fs_nsubs += nsubs;
       fputs(w[i], stdout);
       for (int j = 0; j < nsubs; j++) {
-	printf("\t%s %.8f", token_to_string(subs[j].token), subs[j].logp);
+        printf("\t%s %.8f", token_to_string(subs[j].token), subs[j].logp);
       }
       printf("\n");
     }
   }
   minialloc_free_all();
   g_message("calls=%d subs/call=%g pops/call=%g", 
-	    fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
+      fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
 
   g_rand_free(g_lib_rgen);
 }

@@ -1,8 +1,8 @@
 #include <glib.h>
 #include "minialloc.h"
 
-#define BLOCKSIZE (1<<25)
-//#define BLOCKSIZE 30000000
+//#define BLOCKSIZE (1<<25)
+#define BLOCKSIZE 100000000
 static gpointer data;
 static gpointer free;
 static gsize remaining;
@@ -15,7 +15,8 @@ static void newdata(gpointer olddata) {
 }
 
 gpointer minialloc(gsize size) {
-  g_assert(size <= BLOCKSIZE);
+  if (size > BLOCKSIZE)
+    g_error("minialloc.c asks for %d when the BLOCKSIZE is %d", size, BLOCKSIZE);
   if ((data == NULL) || (size > remaining)) {
     newdata(data);
   }

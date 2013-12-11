@@ -44,14 +44,14 @@ gfloat sentence_logp(Sentence s, int j, LM lm) {
   while (i < j) {
     Token si = s[i];
     s[i] = (guint32) (j - i);	/* ngram order */
-    gfloat lp = lm_logP(lm, &s[i]);
+    gfloat lp = lm_CPPlogP(lm, &s[i]);
     if (lp != SRILM_LOG0) {
       ll += lp;
       s[i] = si;
       break;
     } else {
       s[i]--;
-      ll += lm_logB(lm, &s[i]);
+      ll += lm_CPPlogB(lm, &s[i]);
       s[i] = si;
     }
     i++;

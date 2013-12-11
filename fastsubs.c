@@ -14,6 +14,7 @@
 guint fs_niter = 0;		/* number of pops for performance analysis */
 
 static LM lm1;
+static std::unordered_map<Ngram, gpointer, CPPNgramHash, CPPNgramEqual> CPPlmheap1; 
 static LMheap lmheap1;
 static FSnode rootnode;
 
@@ -41,13 +42,16 @@ static gfloat fs_lookup(Sentence s, int i, int k, gboolean bow);
 
 int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit) {
   g_assert((j >= 1) && (j <= sentence_size(s)));
+//  fprintf(stderr, "in fastsubs\n");
   if (lm1 == NULL) {
     lm1 = lm;
-    lmheap1 = lmheap_init(lm);
-    rootnode = fs_alloc(lm->order);
+    CPPlmheap1 = CPPlmheap_init(lm);
+    //lmheap1 = lmheap_init(lm);
+    rootnode = fs_alloc();
   } else {
     g_assert(lm == lm1);
   }
+//  fprintf(stderr, "fastsubs:fs_init\n");
   fs_init(rootnode, s, j);
 #if DEBUG
   fs_print_node(rootnode, NULL);
@@ -55,6 +59,7 @@ int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit
   int nsubs = 0;
   gdouble psum = 0.0;
   while (nsubs < lm->nvocab - 1) { /* The -1 is for <s> */
+   // fprintf(stderr, "fastsubs subs:%d\n", nsubs);
     Hpair pi = fs_pop(rootnode, s, j);
     /* We can have pi.token == NULLTOKEN earlier than nvocab */
     /* g_assert(pi.token != NULLTOKEN); */
@@ -103,6 +108,7 @@ static void fs_init(FSnode n, Sentence s, int target) {
   /* Unchanged: */
   /* n->type = ROOT; */
   /* n->ngram = NULL; */
+  //fprintf(stderr, "in fs_init\n");
   g_assert(n->type == ROOT);
   heap_size(n->heap) = 0;
   g_hash_table_remove_all(n->hash);
@@ -112,20 +118,24 @@ static void fs_init(FSnode n, Sentence s, int target) {
   Token s_target = s[target];
   s[target] = NULLTOKEN;
   int order = lm1->order;
+  //fprintf(stderr, "fs_init:before_loop\n");
   for (int ngram_end = target; (ngram_end < target+order) && (ngram_end <= sentence_size(s)); ngram_end++) {
     int ngram_start = ngram_end - order + 1;
     if (ngram_start < 1) ngram_start = 1;
     FSnode ni = &n->terms[n->nterms];
+    //fprintf(stderr, "fs_init:for loop before fs_init_alt\n");
     fs_init_alt(ni, s, ngram_start, target, ngram_end);
+    //fprintf(stderr, "fs_init:for loop after fs_init_alt\n");
     /* check if there are any defined logp terms in the alt node */
     if (ni->nterms > 0) {
       n->nterms++;
     } else {
       /* if there are no defined logp nodes all we need is the offset
-	 which represents the lower bound on the cost of an unspecified token. */
+         which represents the lower bound on the cost of an unspecified token. */
       n->offset += ni->offset;
     }
   }
+  //fprintf(stderr, "fs_init:after_loop\n");
   s[target] = s_target;
   n->umax = n->offset;
   for (int i = 0; i < n->nterms; i++) {
@@ -171,14 +181,14 @@ static void fs_init_alt(FSnode n, Sentence s, int ngram_start, int target, int n
     /* Check bow terms, add to const_sum if constant */
     for (int bow_start = ngram_start; bow_start < logp_start; bow_start++) {
       if ((target < bow_start) || (target > bow_end)) {
-	const_sum += fs_lookup_logB(s, bow_start, bow_end);
+        const_sum += fs_lookup_logB(s, bow_start, bow_end);
       }
     }
     /* Check the logp term, add to const_sum if constant */
     if (target < logp_start) {
       const_sum += fs_lookup_logP(s, logp_start, logp_end);
       if (const_sum > n->offset) {
-	n->offset = const_sum;
+        n->offset = const_sum;
       }
     } else {
       /* Construct a logp term if target is inside the logp region */
@@ -186,7 +196,7 @@ static void fs_init_alt(FSnode n, Sentence s, int ngram_start, int target, int n
       fs_init_logP(ni, s, logp_start, logp_end, const_sum);
       /* Do not bother adding terms if logp term lookup fails */
       if (ni->ngram != NULL) {
-	n->nterms++;
+        n->nterms++;
       }
     }
   }
@@ -195,7 +205,7 @@ static void fs_init_alt(FSnode n, Sentence s, int ngram_start, int target, int n
 static gfloat fs_lookup(Sentence s, int i, int k, gboolean bow) {
   Token s_i_1 = s[i-1];
   s[i-1] = k-i+1;
-  gfloat logP = (bow ? lm_logB(lm1, &s[i-1]) : lm_logP(lm1, &s[i-1]));
+  gfloat logP = (bow ? lm_CPPlogB(lm1, &s[i-1]) : lm_CPPlogP(lm1, &s[i-1]));
   s[i-1] = s_i_1;
   return logP;
 }
@@ -213,9 +223,21 @@ static void fs_init_logP(FSnode n, Sentence s, int logp_start, int logp_end, gfl
   n->ngram = NULL;
   n->heap = NULL;
   Token s_logp_start_1 = s[logp_start - 1];
-  s[logp_start-1] = logp_end - logp_start + 1;
-  g_hash_table_lookup_extended(lmheap1, &s[logp_start - 1], (gpointer*) &n->ngram, (gpointer*) &n->heap);
-  s[logp_start-1] = s_logp_start_1;
+  s[logp_start - 1] = logp_end - logp_start + 1;
+  auto it = CPPlmheap1.find(&s[logp_start - 1]);
+  if (it != CPPlmheap1.end()) {
+    n->heap = it->second;
+    n->ngram = it->first;
+  }
+  gboolean r;
+  //r = g_hash_table_lookup_extended(lmheap1, &s[logp_start - 1], (gpointer*) &n->ngram, (gpointer*) &n->heap);
+  s[logp_start - 1] = s_logp_start_1;
+//  if (r) fprintf(stderr, "FOUND OLD\n");
+//  else fprintf(stderr, "NOT FOUND OLD\n");
+//  if (it != CPPlmheap1.end())
+//    fprintf(stderr, "FOUND NEW\n");
+//  else
+//    fprintf(stderr, "NOT FOUND NEW\n");
 }
 
 
@@ -259,10 +281,10 @@ static Hpair fs_top(FSnode n, Sentence s, int target) {
       s[target] = pi.token;
       pi.logp = 0;
       for (int ngram_end = target; 
-	   (ngram_end < target + lm1->order) && 
-	     (ngram_end <= sentence_size(s)); 
-	   ngram_end++) {
-	pi.logp += sentence_logp(s, ngram_end, lm1);
+          (ngram_end < target + lm1->order) && 
+          (ngram_end <= sentence_size(s)); 
+          ngram_end++) {
+        pi.logp += sentence_logp(s, ngram_end, lm1);
       }
       s[target] = s_target;
       heap_insert_max(n->heap, pi.token, pi.logp);
@@ -300,12 +322,12 @@ static Hpair fs_top_alt(FSnode n) {
       Hpair pi = fs_top_logp(ni);
       /* We do not want to return the same token twice. */
       while ((pi.token != NULLTOKEN) && hget(n->hash, pi.token)) {
-	fs_pop_logp(ni);
-	pi = fs_top_logp(ni);
+        fs_pop_logp(ni);
+        pi = fs_top_logp(ni);
       }
       if (pi.logp > pmax) {
-	pmax = pi.logp;
-	n->imax = i;
+        pmax = pi.logp;
+        n->imax = i;
       }
     }
     if (n->imax == -1) 		/* nothing larger than offset */
@@ -360,9 +382,9 @@ void fs_print_node(gpointer data, gpointer user_data) {
   if (node->type != ROOT) printf(" ");
   printf("(");
   switch(node->type) {
-  case ROOT: printf("ROOT"); break;
-  case ALT: printf("ALT"); break;
-  case LOGP: printf("LOGP"); break;
+    case ROOT: printf("ROOT"); break;
+    case ALT: printf("ALT"); break;
+    case LOGP: printf("LOGP"); break;
   }
   if (node->ngram != NULL) {
     printf(" \"");

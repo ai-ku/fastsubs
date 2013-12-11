@@ -40,6 +40,6 @@ int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit
 extern guint fs_niter;		/* number of pops for performance analysis */
 
 /* seeded random number generator */
-GRand *g_lib_rgen;
+extern GRand *g_lib_rgen;
 
 #endif

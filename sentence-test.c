@@ -5,6 +5,8 @@
 #include "sentence.h"
 
 int main(int argc, char **argv) {
+  extern GRand *g_lib_rgen;
+  g_lib_rgen = g_rand_new_with_seed(0);
   char buf[1024];
   Token s[1025];
   g_message_init();
