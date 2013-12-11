@@ -1,5 +1,5 @@
 CC=g++-4.8
-CFLAGS=-O3 -D_XOPEN_SOURCE -Wall -std=c++11 -I. `pkg-config --cflags glib-2.0` -fpermissive
+CFLAGS=-O3 -D_XOPEN_SOURCE -Wall -std=c++11 -I. `pkg-config --cflags glib-2.0` -fpermissive -Wsign-compare
 LIBS=`pkg-config --libs glib-2.0` -lm -lz
 
 all: fastsubs wordsub subs

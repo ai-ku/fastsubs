@@ -5,7 +5,6 @@
 
 typedef GHashTable *LMheap;
 
-LMheap lmheap_init(LM lm);
 std::unordered_map<Ngram, gpointer, CPPNgramHash, CPPNgramEqual> CPPlmheap_init(LM lm); 
  
 #endif

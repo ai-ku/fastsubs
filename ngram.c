@@ -1,6 +1,7 @@
 #include "foreach.h"
 #include "minialloc.h"
 #include "ngram.h"
+#include "fastsubs.h"
 #define MAX_NGRAM_ORDER 1023
 
 Ngram ngram_from_string(char *str) {
@@ -35,7 +36,6 @@ GRand *g_lib_rgen;
 
 static void init_ngram_hash_rnd() {
   guint32 r;
-  g_lib_rgen = g_rand_new_with_seed(0);
   if (*ngram_hash_rnd == 0) {
     for (int i = MAX_NGRAM_ORDER; i >= 0; i--) {
       /* g_rand_int(GRand*): Return a random guint32 equally distributed

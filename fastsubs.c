@@ -15,7 +15,6 @@ guint fs_niter = 0;		/* number of pops for performance analysis */
 
 static LM lm1;
 static std::unordered_map<Ngram, gpointer, CPPNgramHash, CPPNgramEqual> CPPlmheap1; 
-static LMheap lmheap1;
 static FSnode rootnode;
 
 static FSnode fs_alloc();
@@ -79,18 +78,18 @@ int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit
 }
 
 static FSnode fs_alloc() {
-  FSnode root = minialloc(sizeof(struct _FSnode));
+  FSnode root = static_cast<FSnode>(minialloc(sizeof(struct _FSnode)));
   memset(root, 0, sizeof(struct _FSnode));
   root->type = ROOT;
-  root->heap = minialloc(sizeof(Hpair)*(1 + lm1->nvocab));
+  root->heap = static_cast<Hpair*>(minialloc(sizeof(Hpair)*(1 + lm1->nvocab)));
   root->hash = g_hash_table_new(g_direct_hash, g_direct_equal);
-  root->terms = minialloc(lm1->order * sizeof(struct _FSnode));
+  root->terms = static_cast<_FSnode*>(minialloc(lm1->order * sizeof(struct _FSnode)));
   for (int i = 0; i < lm1->order; i++) {
     FSnode alt = &root->terms[i];
     memset(alt, 0, sizeof(struct _FSnode));
     alt->type = ALT;
     alt->hash = g_hash_table_new(g_direct_hash, g_direct_equal);
-    alt->terms = minialloc(lm1->order * sizeof(struct _FSnode));
+    alt->terms = static_cast<_FSnode*>(minialloc(lm1->order * sizeof(struct _FSnode)));
     for (int j = 0; j < lm1->order; j++) {
       FSnode logp = &alt->terms[j];
       memset(logp, 0, sizeof(struct _FSnode));
@@ -226,7 +225,7 @@ static void fs_init_logP(FSnode n, Sentence s, int logp_start, int logp_end, gfl
   s[logp_start - 1] = logp_end - logp_start + 1;
   auto it = CPPlmheap1.find(&s[logp_start - 1]);
   if (it != CPPlmheap1.end()) {
-    n->heap = it->second;
+    n->heap = static_cast<Hpair*>(it->second);
     n->ngram = it->first;
   }
   gboolean r;

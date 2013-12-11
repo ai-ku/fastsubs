@@ -23,8 +23,8 @@ typedef struct _LMS {
   GHashTable *logB;
   guint order;
   guint nvocab;
-  std::unordered_map<Ngram, gfloat*, CPPNgramHash, CPPNgramEqual>* CPPlogP; 
-  std::unordered_map<Ngram, gfloat*, CPPNgramHash, CPPNgramEqual>* CPPlogB; 
+  std::unordered_map<Ngram, gpointer, CPPNgramHash, CPPNgramEqual>* CPPlogP; 
+  std::unordered_map<Ngram, gpointer, CPPNgramHash, CPPNgramEqual>* CPPlogB; 
 } *LM; 
 
 LM lm_init(char *lmfile);
