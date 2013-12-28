@@ -1,10 +1,10 @@
 CC=gcc
-CFLAGS=-O3 -D_XOPEN_SOURCE -Wall -std=c99 -I. `pkg-config --cflags glib-2.0`
+CFLAGS=-O3 -D_GNU_SOURCE -Wall -std=c99 -pedantic -I. `pkg-config --cflags glib-2.0`
 LIBS=`pkg-config --libs glib-2.0` -lm -lz
 
 all: fastsubs wordsub subs
 
-fastsubs: fastsubs-main.o fastsubs.o lm.o ngram.o minialloc.o sentence.o lmheap.o heap.o
+fastsubs: fastsubs-main.o fastsubs.o lm.o ngram.o minialloc.o sentence.o lmheap.o heap.o dlib.o
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 fastsubs-main.o: fastsubs-main.c fastsubs.h
@@ -34,7 +34,7 @@ sentence-test: sentence-test.o sentence.o lm.o ngram.o minialloc.o
 sentence-test.o: sentence-test.c sentence.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-sentence.o: sentence.c sentence.h token.h lm.h
+sentence.o: sentence.c sentence.h token.h lm.h dlib.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 lm-test: lm-test.o lm.o ngram.o minialloc.o
@@ -46,7 +46,7 @@ lm-test.o: lm-test.c lm.h
 lm.o: lm.c lm.h ngram.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-ngram.o: ngram.c ngram.h token.h foreach.h
+ngram.o: ngram.c ngram.h token.h dlib.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 heap.o: heap.c heap.h token.h
@@ -65,6 +65,9 @@ subs: subs.o
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 subs.o: subs.c foreach.h procinfo.h ghashx.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+dlib.o: dlib.c dlib.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:

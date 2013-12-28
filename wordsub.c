@@ -3,7 +3,7 @@ const char *usage = "Usage: wordsub [-s seed] < input > output\n"
   "Input format: word sub1 logp1 sub2 logp2 ...\n"
   "Output format: word random-sub\n";
 
-#define _GNU_SOURCE
+// #define _GNU_SOURCE
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>

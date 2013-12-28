@@ -10,7 +10,7 @@
  */
 typedef Token *Sentence;
 
-#define sentence_size(s) ((guint32)(*s))
+#define sentence_size(s) ((uint32_t)(*s))
 
 /** sentence_from_string(): The st array should be pre-allocated to
  * hold nmax+1 elements.  Words that are not already defined are
@@ -20,11 +20,11 @@ typedef Token *Sentence;
  * for storing the original strings for the words.  Returns number of
  * tokens.
  */
-guint32 sentence_from_string(Sentence st, char *str, int nmax, char **w);
+uint32_t sentence_from_string(Sentence st, char *str, int nmax, char **w);
 
 /** sentence_logp(): Calculates the log probability of the j'th token
  * in sentence s according to model lm 
  */
-gfloat sentence_logp(Sentence s, int j, LM lm);
+float sentence_logp(Sentence s, int j, LM lm);
 
 #endif

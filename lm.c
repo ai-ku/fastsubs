@@ -10,8 +10,8 @@ LM lm_init(char *lmfile) {
   if (lm1 == NULL) {
     lm1 = minialloc(sizeof(struct _LMS));
     lm = lm1;
-    lm->logP = g_hash_table_new(ngram_hash, ngram_equal);
-    lm->logB = g_hash_table_new(ngram_hash, ngram_equal);
+    lm->logP = g_hash_table_new((GHashFunc) ngram_hash, (GEqualFunc) ngram_equal);
+    lm->logB = g_hash_table_new((GHashFunc) ngram_hash, (GEqualFunc) ngram_equal);
     lm->order = 0;
     lm->nvocab = 0;
   } else {

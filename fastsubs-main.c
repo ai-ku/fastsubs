@@ -14,7 +14,7 @@
 
 int main(int argc, char **argv) {
   const char *usage = "Usage: fastsubs [-s seed] [-n <n> | -p <p>] model.lm[.gz] < input.txt\n"
-	"Default seed is 0";
+	"Default seed is 1";
   g_message_init();
   char buf[BUF];
   Token s[SMAX+1];
@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
   int opt;
   guint opt_n = NMAX;
   gdouble opt_p = PMAX;
-  guint opt_s = 0; /* default seed */
+  guint opt_s = 1; /* default seed */
   while ((opt = getopt(argc, argv, "p:n:s:")) != -1) {
     switch(opt) {
     case 'n':
@@ -42,8 +42,7 @@ int main(int argc, char **argv) {
   if (optind >= argc)
     g_error("%s", usage);
 
-  /* seeded generator from glib */
-  g_lib_rgen = g_rand_new_with_seed(opt_s);
+  srandom(opt_s);
 
   g_message("Get substitutes until count=%d OR probability=%g", opt_n, opt_p);
   g_message("Loading model file %s", argv[optind]);
@@ -72,6 +71,4 @@ int main(int argc, char **argv) {
   minialloc_free_all();
   g_message("calls=%d subs/call=%g pops/call=%g", 
 	    fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
-
-  g_rand_free(g_lib_rgen);
 }

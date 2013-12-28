@@ -1,5 +1,4 @@
 #define DEBUG 0
-#define _GNU_SOURCE
 #include <math.h>
 #include <stdio.h>
 #include <string.h>

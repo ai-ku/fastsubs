@@ -64,7 +64,7 @@ static void lmheap_sort(gpointer key, gpointer value, gpointer user_data) {
 
 LMheap lmheap_init(LM lm) {
   g_message("lmheap_init start");
-  LMheap h = g_hash_table_new(ngram_hash, ngram_equal);
+  LMheap h = g_hash_table_new((GHashFunc) ngram_hash, (GEqualFunc) ngram_equal);
   g_message("count logP");
   g_hash_table_foreach(lm->logP, lmheap_count, h);
   g_message("alloc logP_heap");
