@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "dlib.h"
 #include "sentence.h"
 
@@ -16,17 +17,17 @@ static void init_special_tokens() {
 uint32_t sentence_from_string(Sentence st, char *str, int nmax, char **w) {
   if (SOS == 0) init_special_tokens();
   uint32_t ntok = 0;
-  g_assert(ntok < nmax);
+  assert(ntok < nmax);
   st[++ntok] = SOS;
   if (w != NULL) w[ntok] = SOSTAG;
   fortok (word, str) {
     Token wtok = token_try_string(word);
     if ((wtok == SOS) || (wtok == EOS)) continue;
-    g_assert(ntok < nmax);
+    assert(ntok < nmax);
     st[++ntok] = (wtok == 0 ? UNK : wtok);
     if (w != NULL) w[ntok] = word;
   }
-  g_assert(ntok < nmax);
+  assert(ntok < nmax);
   st[++ntok] = EOS;
   if (w != NULL) w[ntok] = EOSTAG;
   st[0] = ntok;
@@ -34,7 +35,7 @@ uint32_t sentence_from_string(Sentence st, char *str, int nmax, char **w) {
 }
 
 float sentence_logp(Sentence s, int j, LM lm) {
-  g_assert((j >= 1) && (j <= sentence_size(s))); 
+  assert((j >= 1) && (j <= sentence_size(s))); 
   if (j == 1) return (s[j] == SOS ? 0 : SRILM_LOG0); /* s[1] always SOS */
   if (s[j] == SOS) return (j == 1 ? 0 : SRILM_LOG0); /* SOS is only in s[1] */
   int i = j - lm->order;
@@ -55,8 +56,8 @@ float sentence_logp(Sentence s, int j, LM lm) {
     }
     i++;
   }
-  g_assert(ll < 0);
-  g_assert(ll > SRILM_LOG0);
+  assert(ll < 0);
+  assert(ll > SRILM_LOG0);
   return ll;
 }
 

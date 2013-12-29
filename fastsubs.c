@@ -2,15 +2,15 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <glib.h>
-#include "minialloc.h"
+#include <assert.h>
+#include "dlib.h"
 #include "sentence.h"
 #include "lmheap.h"
 #include "lm.h"
 #include "fastsubs.h"
 #include "heap.h"
 
-guint fs_niter = 0;		/* number of pops for performance analysis */
+uint64_t fs_niter = 0;		/* number of pops for performance analysis */
 
 static LM lm1;
 static LMheap lmheap1;
@@ -20,7 +20,7 @@ static FSnode fs_alloc();
 
 static void fs_init(FSnode n, Sentence s, int target);
 static void fs_init_alt(FSnode n, Sentence s, int ngram_start, int target, int ngram_end);
-static void fs_init_logP(FSnode n, Sentence s, int logp_start, int logp_end, gfloat offset);
+static void fs_init_logP(FSnode n, Sentence s, int logp_start, int logp_end, float offset);
 
 static Hpair fs_pop(FSnode n, Sentence s, int j);
 static Hpair fs_pop_alt(FSnode n);
@@ -30,41 +30,42 @@ static Hpair fs_top(FSnode n, Sentence s, int j);
 static Hpair fs_top_alt(FSnode n);
 static Hpair fs_top_logp(FSnode n);
 
-static gfloat fs_lookup(Sentence s, int i, int k, gboolean bow);
-#define fs_lookup_logP(s,i,k) fs_lookup(s,i,k,FALSE)
-#define fs_lookup_logB(s,i,k) fs_lookup(s,i,k,TRUE)
+static float fs_lookup(Sentence s, int i, int k, bool bow);
+#define fs_lookup_logP(s,i,k) fs_lookup(s,i,k,false)
+#define fs_lookup_logB(s,i,k) fs_lookup(s,i,k,true)
 
-#define hget(h,k) g_hash_table_lookup((h),GUINT_TO_POINTER(k))
-#define hset(h,k) g_hash_table_insert((h),GUINT_TO_POINTER(k),(h))
+D_HASH(thash_, Token, Token, d_eqmatch, d_ident, d_ident, d_ident, d_iszero, d_mkzero)
 
+#define hget(h,k) thash_get(h, k, false)
+#define hset(h,k) thash_get(h, k, true)
 
-int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit) {
-  g_assert((j >= 1) && (j <= sentence_size(s)));
+int fastsubs(Hpair *subs, Sentence s, int j, LM lm, double plimit, uint32_t nlimit) {
+  assert((j >= 1) && (j <= sentence_size(s)));
   if (lm1 == NULL) {
     lm1 = lm;
     lmheap1 = lmheap_init(lm);
     rootnode = fs_alloc(lm->order);
   } else {
-    g_assert(lm == lm1);
+    assert(lm == lm1);
   }
   fs_init(rootnode, s, j);
 #if DEBUG
   fs_print_node(rootnode, NULL);
 #endif
   int nsubs = 0;
-  gdouble psum = 0.0;
+  double psum = 0.0;
   while (nsubs < lm->nvocab - 1) { /* The -1 is for <s> */
     Hpair pi = fs_pop(rootnode, s, j);
     /* We can have pi.token == NULLTOKEN earlier than nvocab */
-    /* g_assert(pi.token != NULLTOKEN); */
+    /* assert(pi.token != NULLTOKEN); */
     if (pi.token == NULLTOKEN) break;
     subs[nsubs++] = pi;
-    gboolean nlimit_ok = (nsubs >= nlimit);
-    gboolean plimit_ok = FALSE;
+    bool nlimit_ok = (nsubs >= nlimit);
+    bool plimit_ok = false;
     if (plimit < 1.0) {
-      gdouble lastp = exp10(pi.logp);
+      double lastp = exp10(pi.logp);
       psum += lastp;
-      gdouble maxrest = lastp * (lm->nvocab - nsubs);
+      double maxrest = lastp * (lm->nvocab - nsubs);
       plimit_ok = (plimit <= (psum/(psum + maxrest)));
     }
     if (nlimit_ok || plimit_ok) break;
@@ -73,18 +74,18 @@ int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit
 }
 
 static FSnode fs_alloc() {
-  FSnode root = minialloc(sizeof(struct _FSnode));
+  FSnode root = dalloc(sizeof(struct _FSnode));
   memset(root, 0, sizeof(struct _FSnode));
   root->type = ROOT;
-  root->heap = minialloc(sizeof(Hpair)*(1 + lm1->nvocab));
-  root->hash = g_hash_table_new(g_direct_hash, g_direct_equal);
-  root->terms = minialloc(lm1->order * sizeof(struct _FSnode));
+  root->heap = dalloc(sizeof(Hpair)*(1 + lm1->nvocab));
+  root->hash = thash_new(0);
+  root->terms = dalloc(lm1->order * sizeof(struct _FSnode));
   for (int i = 0; i < lm1->order; i++) {
     FSnode alt = &root->terms[i];
     memset(alt, 0, sizeof(struct _FSnode));
     alt->type = ALT;
-    alt->hash = g_hash_table_new(g_direct_hash, g_direct_equal);
-    alt->terms = minialloc(lm1->order * sizeof(struct _FSnode));
+    alt->hash = thash_new(0);
+    alt->terms = dalloc(lm1->order * sizeof(struct _FSnode));
     for (int j = 0; j < lm1->order; j++) {
       FSnode logp = &alt->terms[j];
       memset(logp, 0, sizeof(struct _FSnode));
@@ -102,9 +103,9 @@ static void fs_init(FSnode n, Sentence s, int target) {
   /* Unchanged: */
   /* n->type = ROOT; */
   /* n->ngram = NULL; */
-  g_assert(n->type == ROOT);
+  assert(n->type == ROOT);
   heap_size(n->heap) = 0;
-  g_hash_table_remove_all(n->hash);
+  thash_clear(n->hash);
   n->offset = 0.0;
   n->nterms = 0;
   n->imax = -1;
@@ -132,7 +133,7 @@ static void fs_init(FSnode n, Sentence s, int target) {
     Hpair pi = fs_top_alt(ni);
     /* pi.token could be NULL if none of the tokens have score above alt.offset */
     /* even if we manage not to create any empty alt nodes */
-    /* g_assert(pi.token != NULLTOKEN); */
+    /* assert(pi.token != NULLTOKEN); */
     /* however the pi.logp should still be a valid upper bound for this node */
     n->umax += pi.logp;
   }
@@ -158,15 +159,15 @@ static void fs_init_alt(FSnode n, Sentence s, int ngram_start, int target, int n
   /* n->ngram = NULL; */
   /* n->heap = NULL; */
   /* n->umax = 0.0; */
-  g_assert(n->type == ALT);
-  g_hash_table_remove_all(n->hash);
+  assert(n->type == ALT);
+  thash_clear(n->hash);
   n->imax = -1;
   n->offset = SRILM_LOG0;
   n->nterms = 0;
   int bow_end = ngram_end - 1;
   int logp_end = ngram_end;
   for (int logp_start = ngram_start; logp_start <= ngram_end; logp_start++) {
-    gfloat const_sum = 0.0;
+    float const_sum = 0.0;
     /* Check bow terms, add to const_sum if constant */
     for (int bow_start = ngram_start; bow_start < logp_start; bow_start++) {
       if ((target < bow_start) || (target > bow_end)) {
@@ -191,35 +192,39 @@ static void fs_init_alt(FSnode n, Sentence s, int ngram_start, int target, int n
   }
 }
 
-static gfloat fs_lookup(Sentence s, int i, int k, gboolean bow) {
+static float fs_lookup(Sentence s, int i, int k, bool bow) {
   Token s_i_1 = s[i-1];
   s[i-1] = k-i+1;
-  gfloat logP = (bow ? lm_logB(lm1, &s[i-1]) : lm_logP(lm1, &s[i-1]));
+  float logP = (bow ? lm_logB(lm1, &s[i-1]) : lm_logP(lm1, &s[i-1]));
   s[i-1] = s_i_1;
   return logP;
 }
 
-static void fs_init_logP(FSnode n, Sentence s, int logp_start, int logp_end, gfloat offset) {
+static void fs_init_logP(FSnode n, Sentence s, int logp_start, int logp_end, float offset) {
   /* Unchanged: */
   /* n->type = LOGP; */
   /* n->hash = NULL; */
   /* n->terms = NULL; */
   /* n->nterms = 0; */
   /* n->umax = 0.0; */
-  g_assert(n->type == LOGP);
+  assert(n->type == LOGP);
   n->offset = offset;
   n->imax = 1;
   n->ngram = NULL;
   n->heap = NULL;
   Token s_logp_start_1 = s[logp_start - 1];
   s[logp_start-1] = logp_end - logp_start + 1;
-  g_hash_table_lookup_extended(lmheap1, &s[logp_start - 1], (gpointer*) &n->ngram, (gpointer*) &n->heap);
+  NH_t nh = lmheap_get(lmheap1, &s[logp_start - 1]);
+  if (nh != NULL) {
+    n->ngram = nh->key;
+    n->heap = nh->val;
+  }
   s[logp_start-1] = s_logp_start_1;
 }
 
 
 static Hpair fs_top(FSnode n, Sentence s, int target) {
-  g_assert(n->type == ROOT);
+  assert(n->type == ROOT);
 
   /* n->umax should be equal to the sum of ni->top (where ni are the
      child nodes) plus n->offset, therefore an upper bound on how high
@@ -242,12 +247,12 @@ static Hpair fs_top(FSnode n, Sentence s, int target) {
       if (i == n->imax) break;
       if (pi.token != NULLTOKEN) break;
     }
-    g_assert(pi.token != NULLTOKEN);
+    assert(pi.token != NULLTOKEN);
     n->imax = i;
 
     /* update umax (need even if pi.token in hash) */
     pi = fs_pop_alt(ni);
-    g_assert(pi.token != NULLTOKEN);
+    assert(pi.token != NULLTOKEN);
     Hpair pi2 = fs_top_alt(ni);
     n->umax = n->umax - pi.logp + pi2.logp;
 
@@ -291,9 +296,9 @@ static Hpair fs_pop(FSnode n, Sentence s, int target) {
  */
 
 static Hpair fs_top_alt(FSnode n) {
-  g_assert(n->type == ALT);
+  assert(n->type == ALT);
   if (n->imax == -1) {
-    gfloat pmax = n->offset; 	/* do not return anything below offset */
+    float pmax = n->offset; 	/* do not return anything below offset */
     for (int i = n->nterms - 1; i >= 0; i--) {
       FSnode ni = &n->terms[i];
       Hpair pi = fs_top_logp(ni);
@@ -310,7 +315,7 @@ static Hpair fs_top_alt(FSnode n) {
     if (n->imax == -1) 		/* nothing larger than offset */
       n->imax = n->nterms;
   }
-  g_assert(n->imax >= 0);
+  assert(n->imax >= 0);
   Hpair pi;
   if (n->imax == n->nterms) {
     pi.token = NULLTOKEN; pi.logp = n->offset;
@@ -321,15 +326,15 @@ static Hpair fs_top_alt(FSnode n) {
 }
 
 static Hpair fs_pop_alt(FSnode n) {
-  g_assert(n->type == ALT);
+  assert(n->type == ALT);
   if (n->imax == -1) fs_top_alt(n);
-  g_assert(n->imax >= 0);
+  assert(n->imax >= 0);
   Hpair pi;
   if (n->imax == n->nterms) {
     pi.token = NULLTOKEN; pi.logp = n->offset;
   } else {
     pi = fs_pop_logp(&n->terms[n->imax]);
-    g_assert(pi.token != NULLTOKEN);
+    assert(pi.token != NULLTOKEN);
     hset(n->hash, pi.token);
     n->imax = -1;
   }
@@ -354,7 +359,7 @@ static Hpair fs_top_logp(FSnode n) {
 }
 
 /* debug fn */
-void fs_print_node(gpointer data, gpointer user_data) {
+void fs_print_node(ptr_t data, ptr_t user_data) {
   FSnode node = (FSnode) data;
   if (node->type != ROOT) printf(" ");
   printf("(");

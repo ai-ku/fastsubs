@@ -1,78 +1,73 @@
 #include <stdio.h>
-#include "minialloc.h"
+#include <assert.h>
+#include <glib.h>
+#include "dlib.h"
 #include "token.h"
 #include "ngram.h"
 #include "lm.h"
-#include "lmheap.h"
 #include "heap.h"
+#include "lmheap.h"
 
 #define NDOT 100000
 #define dot() if (++ndot % NDOT == 0) fprintf(stderr, ".")
-static gsize ndot;
+static size_t ndot;
 
-static void lmheap_count(gpointer key, gpointer value, gpointer user_data) {
-  Ngram ng = (Ngram) key;
-  GHashTable *h = user_data;
-  for (int i = ngram_size(ng); i > 0; i--) {
-    Token ng_i = ng[i];
-    ng[i] = NULLTOKEN;
-    guint32* iptr = g_hash_table_lookup(h, ng);
-    if (iptr == NULL) {
-      Ngram ngcopy = ngram_dup(ng);
-      iptr = minialloc(sizeof(guint32));
-      *iptr = 1;
-      g_hash_table_insert(h, ngcopy, iptr);
-    } else {
-      (*iptr)++;
-    }
-    ng[i] = ng_i;
-  }
-  dot();
-}
+#define _lh_init(ng) ((struct NH_s) { ngram_dup(ng), NULL })
+D_HASH(_lh, struct NH_s, Ngram, ngram_equal, ngram_hash, d_keyof, _lh_init, d_keyisnull, d_keymknull)
 
-static void lmheap_alloc(gpointer key, gpointer value, gpointer user_data) {
-  Ngram ng = (Ngram) key;
-  guint32 *iptr = (guint32 *) value;
-  GHashTable *h = user_data;
-  Heap heap = minialloc(sizeof(Hpair) * (1 + (*iptr)));
-  heap_size(heap) = 0;
-  g_hash_table_insert(h, ng, heap);
-  dot();
-}
-
-static void lmheap_insert(gpointer key, gpointer value, gpointer user_data) {
-  Ngram ng = (Ngram) key;
-  gfloat *fptr = (gfloat*) value;
-  GHashTable *h = user_data;
-  for (int i = ngram_size(ng); i > 0; i--) {
-    Token ng_i = ng[i];
-    ng[i] = NULLTOKEN;
-    Heap heap = g_hash_table_lookup(h, ng);
-    ng[i] = ng_i;
-    g_assert(heap != NULL);
-    heap_insert_min(heap, ng_i, *fptr);
-  }
-  dot();
-}
-
-static void lmheap_sort(gpointer key, gpointer value, gpointer user_data) {
-  Heap heap = (Heap) value;
-  g_assert(heap != NULL && heap_size(heap) > 0);
-  heap_sort_max(heap);
-  dot();
+NH_t lmheap_get(LMheap h, Ngram key) {
+  return _lhget(h, key, false);
 }
 
 LMheap lmheap_init(LM lm) {
   g_message("lmheap_init start");
-  LMheap h = g_hash_table_new((GHashFunc) ngram_hash, (GEqualFunc) ngram_equal);
+  LMheap h = _lhnew(0);		// know exactly how much to allocate, should use it
+
   g_message("count logP");
-  g_hash_table_foreach(lm->logP, lmheap_count, h);
+  forhash (NF_t, nf, lm->logP, d_keyisnull) {
+    Ngram ng = nf->key;
+    for (int i = ngram_size(ng); i > 0; i--) {
+      Token ng_i = ng[i];
+      ng[i] = NULLTOKEN;
+      NH_t lh = _lhget(h, ng, true);
+      lh->val = (Heap)(1 + ((size_t)(lh->val)));
+      ng[i] = ng_i;
+    }
+    dot();
+  }
+
   g_message("alloc logP_heap");
-  g_hash_table_foreach(h, lmheap_alloc, h);
+  forhash (NH_t, nh, h, d_keyisnull) {
+    uint64_t n = ((uint64_t) nh->val);
+    Heap heap = dalloc(sizeof(Hpair) * (1 + n));
+    heap_size(heap) = 0;
+    nh->val = heap;
+    dot();
+  }
+
   g_message("insert logP");
-  g_hash_table_foreach(lm->logP, lmheap_insert, h);
+  forhash (NF_t, nf, lm->logP, d_keyisnull) {
+    Ngram ng = nf->key;
+    float f = nf->val;
+    for (int i = ngram_size(ng); i > 0; i--) {
+      Token ng_i = ng[i];
+      ng[i] = NULLTOKEN;
+      NH_t lh = _lhget(h, ng, false);
+      ng[i] = ng_i;
+      assert(lh != NULL);
+      assert(lh->val != NULL);
+      heap_insert_min(lh->val, ng_i, f);
+      assert(heap_size(lh->val) > 0);
+    }
+    dot();
+  }
   g_message("sort logP_heap");
-  g_hash_table_foreach(h, lmheap_sort, NULL);
+  forhash (NH_t, nh, h, d_keyisnull) {
+    Heap heap = nh->val;
+    assert(heap != NULL && heap_size(heap) > 0);
+    heap_sort_max(heap);
+    dot();
+  }
   g_message("lmheap_init done");
   return h;
 }

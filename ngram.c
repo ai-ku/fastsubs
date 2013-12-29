@@ -46,16 +46,16 @@ static void init_ngram_hash_rnd() {
   }
 }
 
-unsigned int ngram_hash(const Ngram ng) {
+uint64_t ngram_hash(const Ngram ng) {
   if (*ngram_hash_rnd == 0) init_ngram_hash_rnd();
-  unsigned int hash = 0;
+  uint64_t hash = 0;
   for (int i = ngram_size(ng); i > 0; i--) {
     hash += ng[i] * ngram_hash_rnd[i];
   }
   return hash;
 }
 
-int ngram_equal(const Ngram a, const Ngram b) {
+bool ngram_equal(const Ngram a, const Ngram b) {
   if (ngram_size(a) != ngram_size(b)) return 0;
   for (int i = ngram_size(a); i > 0; i--) {
     if (a[i] != b[i]) return 0;

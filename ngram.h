@@ -15,8 +15,8 @@ typedef Token *Ngram;
 
 #define ngram_size(p) ((p)[0])
 
-unsigned int ngram_hash(const Ngram p); // change this to 64 bits
-int ngram_equal(const Ngram pa, const Ngram pb); // change this to bool?
+uint64_t ngram_hash(const Ngram p);
+bool ngram_equal(const Ngram pa, const Ngram pb);
 Ngram ngram_from_string(char *str);
 Ngram ngram_dup(Ngram ng);
 Ngram ngram_cpy(Ngram ngcopy, Ngram ng);

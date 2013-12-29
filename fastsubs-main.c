@@ -4,7 +4,7 @@
 #include "procinfo.h"
 #include "fastsubs.h"
 #include "heap.h"
-#include "minialloc.h"
+#include "dlib.h"
 
 #define BUF  (1<<16)		/* max input line length */
 #define SMAX (1<<16)		/* max tokens in a sentence */
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
        opt_n = lm->nvocab - 1;
        g_message("[Number of substitutes > vocabulary size] set to maximum substitute number=%d", opt_n - 1);
   }
-  Hpair *subs = minialloc(lm->nvocab * sizeof(Hpair));
+  Hpair *subs = dalloc(lm->nvocab * sizeof(Hpair));
   g_message("ngram order = %d\n==> Enter sentences:\n", lm->order);
   int fs_ncall = 0;
   int fs_nsubs = 0;
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
       printf("\n");
     }
   }
-  minialloc_free_all();
+  dfreeall();
   g_message("calls=%d subs/call=%g pops/call=%g", 
 	    fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
 }

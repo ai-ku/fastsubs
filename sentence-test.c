@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <glib.h>
 #include "token.h"
 #include "lm.h"
 #include "procinfo.h"

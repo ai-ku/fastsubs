@@ -9,7 +9,7 @@ const char *help = "subs lmfile < text > output";
 #include <getopt.h>
 #include <glib.h>
 #include <zlib.h>
-#include "foreach.h"
+#include "dlib.h"
 #include "procinfo.h"
 #include "ghashx.h"
 
@@ -50,7 +50,7 @@ int sentence_from_string(Sentence st, char *str, int nmax) {
   if (SOS == 0) init_special_tokens();
   int ntok = 0;
   st[ntok++] = SOS;
-  foreach_token(word, str) {
+  fortok(word, str) {
     g_assert(ntok < nmax);
     Token wtok = token_try_string(word);
     st[ntok++] = (wtok == 0 ? UNK : wtok);
@@ -77,7 +77,7 @@ void ngram_free(gpointer p) { if (p != NULL) g_free(p); }
 
 int ngram_from_string(Ngram ng, char *str, int nmax) {
   int ntok = 0;
-  foreach_token(word, str) {
+  fortok(word, str) {
     g_assert(ntok < nmax);
     ng[ntok++] = token_from_string(word);
   }
@@ -183,7 +183,7 @@ LM read_lm(char *lmfile) {
   Token ng[MAX_NGRAM_ORDER + 1];
   LM lm = lm_new();
   Hash ht = lm->lookup;
-  foreach_line(str, lmfile){       
+  forline (str, lmfile){       
     if (*str == '\n' || *str == '\\' || *str == 'n') continue;
     errno = 0;
     LogProb lp = logprob_new(0, 0);
@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
   gdouble *ll = g_new0(gdouble, 1 + lm->maxtoken);
 
   g_message("Reading input from stdin...");
-  foreach_line(str, "") {
+  forline (str, "") {
     int n = sentence_from_string(s, str, MAX_SENTENCE_LEN);
     for (int i = 1; i < n; i++) {
       logL2_all(s, i, lm, ll);

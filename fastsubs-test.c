@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <glib.h>
 #include "procinfo.h"
 #include "fastsubs.h"
 #include "heap.h"
-#include "minialloc.h"
+#include "dlib.h"
 
 int main(int argc, char **argv) {
   char buf[1024];
@@ -10,7 +11,7 @@ int main(int argc, char **argv) {
   g_message_init();
   g_message("Loading model file %s", argv[1]);
   LM lm = lm_init(argv[1]);
-  Hpair *subs = minialloc(lm->nvocab * sizeof(Hpair));
+  Hpair *subs = dalloc(lm->nvocab * sizeof(Hpair));
   g_message("ngram order = %d\n==> Enter sentence:\n", lm->order);
   while(fgets(buf, 1024, stdin)) {
     int n = sentence_from_string(s, buf, 1024, NULL);
@@ -23,5 +24,5 @@ int main(int argc, char **argv) {
     }
     g_message("==> Enter sentence:\n");
   }
-  minialloc_free_all();
+  dfreeall();
 }

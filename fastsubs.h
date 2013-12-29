@@ -1,6 +1,5 @@
 #ifndef __FASTSUBS_H__
 #define __FASTSUBS_H__
-#include <glib.h>
 #include "lm.h"
 #include "sentence.h"
 #include "heap.h"
@@ -17,10 +16,10 @@ typedef struct _FSnode {
   Ngram ngram;
   struct _FSnode *terms;
   int nterms;
-  gfloat offset;
-  Hpair *heap;
-  GHashTable *hash;
-  gfloat umax;
+  float offset;
+  Heap heap;
+  darr_t hash;
+  float umax;
   int imax;
 } *FSnode;
 
@@ -35,11 +34,8 @@ typedef struct _FSnode {
  *  satisfied, so just pass 0 for a limit you do not care about.  The
  *  number of entries placed in the subs array is returned.
  */
-int fastsubs(Hpair *subs, Sentence s, int j, LM lm, gdouble plimit, guint nlimit);
+int fastsubs(Hpair *subs, Sentence s, int j, LM lm, double plimit, uint32_t nlimit);
 
-extern guint fs_niter;		/* number of pops for performance analysis */
-
-/* seeded random number generator */
-GRand *g_lib_rgen;
+extern uint64_t fs_niter; /* number of pops for performance analysis */
 
 #endif

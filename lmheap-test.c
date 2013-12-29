@@ -2,7 +2,7 @@
 #include "lm.h"
 #include "lmheap.h"
 #include "procinfo.h"
-#include "minialloc.h"
+#include "dlib.h"
 #include "heap.h"
 
 int main(int argc, char **argv) {
@@ -36,6 +36,6 @@ int main(int argc, char **argv) {
   }
 
   g_message("Destroying LMheap");
-  minialloc_free_all();
+  dfreeall();
   g_message("done");
 }

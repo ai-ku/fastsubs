@@ -8,7 +8,7 @@ const char *usage = "Usage: wordsub [-s seed] < input > output\n"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "foreach.h"
+#include "dlib.h"
 
 int main(int argc, char **argv) {
   int opt;
@@ -18,13 +18,13 @@ int main(int argc, char **argv) {
     default: fputs(usage, stderr); exit(0);
     }
   }
-  foreach_line(buf, "") {
+  forline(buf, "") {
     double sum = 0;
     int col = 0;
     char *word = NULL;
     char *sub = NULL;
     char *last = NULL;
-    foreach_token(tok, buf) {
+    fortok(tok, buf) {
       if (col == 0) {
 	word = tok;
       } else if (col % 2) {
