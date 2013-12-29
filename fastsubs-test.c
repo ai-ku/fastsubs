@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <glib.h>
-#include "procinfo.h"
 #include "fastsubs.h"
 #include "heap.h"
 #include "dlib.h"
@@ -8,11 +6,10 @@
 int main(int argc, char **argv) {
   char buf[1024];
   Token s[1025];
-  g_message_init();
-  g_message("Loading model file %s", argv[1]);
+  msg("Loading model file %s", argv[1]);
   LM lm = lm_init(argv[1]);
   Hpair *subs = dalloc(lm->nvocab * sizeof(Hpair));
-  g_message("ngram order = %d\n==> Enter sentence:\n", lm->order);
+  msg("ngram order = %d\n==> Enter sentence:\n", lm->order);
   while(fgets(buf, 1024, stdin)) {
     int n = sentence_from_string(s, buf, 1024, NULL);
     for (int i = 2; i <= n; i++) {
@@ -22,7 +19,7 @@ int main(int argc, char **argv) {
 	printf("%s\t%.4f\n", token_to_string(subs[j].token), subs[j].logp);
       }
     }
-    g_message("==> Enter sentence:\n");
+    msg("==> Enter sentence:\n");
   }
   dfreeall();
 }

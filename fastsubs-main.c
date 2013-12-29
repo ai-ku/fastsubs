@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <glib.h>
-#include "procinfo.h"
 #include "fastsubs.h"
 #include "heap.h"
 #include "dlib.h"
@@ -9,19 +7,18 @@
 #define BUF  (1<<16)		/* max input line length */
 #define SMAX (1<<16)		/* max tokens in a sentence */
 #define PMAX 1.0		/* default value for -p */
-#define NMAX G_MAXUINT		/* default value for -n */
+#define NMAX UINT32_MAX		/* default value for -n */
 
 
 int main(int argc, char **argv) {
   const char *usage = "Usage: fastsubs [-s seed] [-n <n> | -p <p>] model.lm[.gz] < input.txt\n";
-  g_message_init();
   char buf[BUF];
   Token s[SMAX+1];
   char *w[SMAX+1];
 
   int opt;
-  guint opt_n = NMAX;
-  gdouble opt_p = PMAX;
+  uint32_t opt_n = NMAX;
+  double opt_p = PMAX;
   while ((opt = getopt(argc, argv, "p:n:s:")) != -1) {
     switch(opt) {
     case 'n':
@@ -31,22 +28,22 @@ int main(int argc, char **argv) {
       opt_p = atof(optarg);
       break;
     default:
-      g_error("%s", usage);
+      die("%s", usage);
     }
   }
   if (optind >= argc)
-    g_error("%s", usage);
+    die("%s", usage);
 
-  g_message("Get substitutes until count=%d OR probability=%g", opt_n, opt_p);
-  g_message("Loading model file %s", argv[optind]);
+  msg("Get substitutes until count=%d OR probability=%g", opt_n, opt_p);
+  msg("Loading model file %s", argv[optind]);
   LM lm = lm_init(argv[optind]);
-  g_message("vocab:%d", lm->nvocab);
+  msg("vocab:%d", lm->nvocab);
   if (lm->nvocab < opt_n){
        opt_n = lm->nvocab - 1;
-       g_message("[Number of substitutes > vocabulary size] set to maximum substitute number=%d", opt_n - 1);
+       msg("[Number of substitutes > vocabulary size] set to maximum substitute number=%d", opt_n - 1);
   }
   Hpair *subs = dalloc(lm->nvocab * sizeof(Hpair));
-  g_message("ngram order = %d\n==> Enter sentences:\n", lm->order);
+  msg("ngram order = %d\n==> Enter sentences:\n", lm->order);
   int fs_ncall = 0;
   int fs_nsubs = 0;
   while(fgets(buf, BUF, stdin)) {
@@ -61,7 +58,14 @@ int main(int argc, char **argv) {
       printf("\n");
     }
   }
+  msg("free lmheap...");
+  fastsubs_free();
+  msg("free lm...");
+  lm_free(lm);
+  msg("free symtable...");
+  symtable_free();
+  msg("free dalloc space...");
   dfreeall();
-  g_message("calls=%d subs/call=%g pops/call=%g", 
-	    fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
+  msg("calls=%d subs/call=%g pops/call=%g", 
+      fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
 }

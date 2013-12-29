@@ -35,6 +35,7 @@ typedef struct _FSnode {
  *  number of entries placed in the subs array is returned.
  */
 int fastsubs(Hpair *subs, Sentence s, int j, LM lm, double plimit, uint32_t nlimit);
+void fastsubs_free();
 
 extern uint64_t fs_niter; /* number of pops for performance analysis */
 

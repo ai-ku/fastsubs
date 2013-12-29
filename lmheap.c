@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <assert.h>
-#include <glib.h>
 #include "dlib.h"
 #include "token.h"
 #include "ngram.h"
@@ -19,11 +18,15 @@ NH_t lmheap_get(LMheap h, Ngram key) {
   return _lhget(h, key, false);
 }
 
+void lmheap_free(LMheap h) {
+  _lhfree(h);
+}
+
 LMheap lmheap_init(LM lm) {
-  g_message("lmheap_init start");
+  msg("lmheap_init start");
   LMheap h = _lhnew(0);		// know exactly how much to allocate, should use it
 
-  g_message("count logP");
+  msg("count logP");
   forhash (NF_t, nf, lm->logP, d_keyisnull) {
     Ngram ng = nf->key;
     for (int i = ngram_size(ng); i > 0; i--) {
@@ -36,7 +39,7 @@ LMheap lmheap_init(LM lm) {
     dot();
   }
 
-  g_message("alloc logP_heap");
+  msg("alloc logP_heap");
   forhash (NH_t, nh, h, d_keyisnull) {
     uint64_t n = ((uint64_t) nh->val);
     Heap heap = dalloc(sizeof(Hpair) * (1 + n));
@@ -45,7 +48,7 @@ LMheap lmheap_init(LM lm) {
     dot();
   }
 
-  g_message("insert logP");
+  msg("insert logP");
   forhash (NF_t, nf, lm->logP, d_keyisnull) {
     Ngram ng = nf->key;
     float f = nf->val;
@@ -61,14 +64,14 @@ LMheap lmheap_init(LM lm) {
     }
     dot();
   }
-  g_message("sort logP_heap");
+  msg("sort logP_heap");
   forhash (NH_t, nh, h, d_keyisnull) {
     Heap heap = nh->val;
     assert(heap != NULL && heap_size(heap) > 0);
     heap_sort_max(heap);
     dot();
   }
-  g_message("lmheap_init done");
+  msg("lmheap_init done");
   return h;
 }
 

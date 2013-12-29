@@ -73,6 +73,10 @@ int fastsubs(Hpair *subs, Sentence s, int j, LM lm, double plimit, uint32_t nlim
   return nsubs;
 }
 
+void fastsubs_free() {
+  lmheap_free(lmheap1);
+}
+
 static FSnode fs_alloc() {
   FSnode root = dalloc(sizeof(struct _FSnode));
   memset(root, 0, sizeof(struct _FSnode));

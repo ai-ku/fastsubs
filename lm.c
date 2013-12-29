@@ -14,7 +14,7 @@ static LM lm1;
 LM lm_init(char *lmfile) {
   LM lm = NULL;
   if (lm1 == NULL) {
-    lm1 = dalloc(sizeof(struct _LMS));
+    lm1 = _d_malloc(sizeof(struct _LMS));
     lm = lm1;
     lm->logP = _lpnew(0);
     lm->logB = _lpnew(0);
@@ -54,6 +54,12 @@ LM lm_init(char *lmfile) {
   msg("sizeof(struct NF_s)=%zu", sizeof(struct NF_s));
 
   return lm;
+}
+
+void lm_free(LM lm) {
+  _lpfree(lm->logP);
+  _lpfree(lm->logB);
+  _d_free(lm);
 }
 
 float lm_logP(LM lm, Ngram ng) {
