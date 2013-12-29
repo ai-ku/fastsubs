@@ -2,11 +2,6 @@
 #define __NGRAM_H__
 #include "token.h"
 
-// todo:
-// change hash ret to size_t after getting rid of glib
-// try non-random hash for ngrams like fnv1a
-// try regular alloc instead of dalloc
-
 /** Ngrams are represented as Token arrays with zeroth element
  * representing count.  The actual tokens are in positions 1..n.
  */
