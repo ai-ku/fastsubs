@@ -23,9 +23,7 @@ LM lm_init(char *lmfile) {
   } else {
     die("Only one LM is allowed."); // why?
   }
-
-  msg("sizeof(struct NF_s)=%zu", sizeof(struct NF_s));
-
+  size_t tok_cnt = 0;
   forline(str, lmfile) {
     errno = 0;
     if (*str == '\n' || *str == '\\' || *str == 'n') continue;
@@ -39,6 +37,7 @@ LM lm_init(char *lmfile) {
       if (tok[1][len-1] == '\n') tok[1][len-1] = '\0';
     }
     Ngram ng = ngram_from_string(tok[1]);
+    tok_cnt += ngram_size(ng);
     if (ngram_size(ng) > lm->order) 
       lm->order = ngram_size(ng);
     for (int i = ngram_size(ng); i > 0; i--) {
@@ -51,7 +50,10 @@ LM lm_init(char *lmfile) {
       _logB(lm, ng) = f;
     }
   }
-  msg("sizeof(struct NF_s)=%zu", sizeof(struct NF_s));
+  msg("lm_init done: logP=%zux(%zu/%zu) logB=%zux(%zu/%zu) toks=%zu", 
+      sizeof(struct NF_s), len(lm->logP), cap(lm->logP), 
+      sizeof(struct NF_s), len(lm->logB), cap(lm->logB), 
+      tok_cnt);
 
   return lm;
 }

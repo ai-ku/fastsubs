@@ -8,8 +8,9 @@
 #include "lmheap.h"
 
 #define NDOT 100000
-#define dot() if (++ndot % NDOT == 0) fprintf(stderr, ".")
-static size_t ndot;
+#define dot() if (++ndot % NDOT == 0) fputc('.', stderr)
+#define dotln() fputc('\n', stderr);
+static size_t ndot = 0;
 
 #define _lh_init(ng) ((struct NH_s) { ngram_dup(ng), NULL })
 D_HASH(_lh, struct NH_s, Ngram, ngram_equal, ngram_hash, d_keyof, _lh_init, d_keyisnull, d_keymknull)
@@ -38,6 +39,7 @@ LMheap lmheap_init(LM lm) {
     }
     dot();
   }
+  dotln();
 
   msg("alloc logP_heap");
   forhash (NH_t, nh, h, d_keyisnull) {
@@ -47,6 +49,7 @@ LMheap lmheap_init(LM lm) {
     nh->val = heap;
     dot();
   }
+  dotln();
 
   msg("insert logP");
   forhash (NF_t, nf, lm->logP, d_keyisnull) {
@@ -64,14 +67,22 @@ LMheap lmheap_init(LM lm) {
     }
     dot();
   }
+  dotln();
+
+  size_t hpair_cnt = 0;
   msg("sort logP_heap");
   forhash (NH_t, nh, h, d_keyisnull) {
     Heap heap = nh->val;
     assert(heap != NULL && heap_size(heap) > 0);
     heap_sort_max(heap);
+    hpair_cnt += heap_size(heap);
     dot();
   }
-  msg("lmheap_init done");
+  dotln();
+
+  msg("lmheap_init done: %zux(%zu/%zu), hpairs=%zu", 
+      sizeof(struct NH_s), len(h), cap(h), hpair_cnt);
+  
   return h;
 }
 
