@@ -68,4 +68,4 @@ dlib.o: dlib.c dlib.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	-rm -f *.o fastsubs fastsubs-test lmheap-test sentence-test lm-test wordsub subs
+	-rm -f *.o *.i *.s *~ fastsubs fastsubs-test lmheap-test sentence-test lm-test wordsub subs

@@ -1,0 +1,176 @@
+2013-12-29  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* TODO: all optimization will probably halve the memory
+	requirement.  The basic cost, sorted word arrays for each ngram
+	position (8 bytes x total number of words in lm), is irreducible.
+	Faster sorting may reduce init time, but currently at 3 minutes it
+	is not a big cost.  The speed at which we spit out substitutes
+	will not get effected.
+
+	* test16.out: Printing out hash sizes.
+	[1m34.73s 1,788,362,128 1,801,076,736b] lm_init done: logP=16x(27427357/67108864) logB=16x(7119768/16777216) toks=83530373
+	[3m14.47s 4,334,901,120 4,346,888,192b] lmheap_init done: 16x(29792712/67108864), hpairs=83530373
+
+	TODO: add dots to dlib.  Replace % with bit manipulation.  Arg to
+	dot is power of 2.  Use macro.  Add newline.  See old macro.
+
+	TODO: Separate ngram tables (array+hash) for each ngram order.
+	Order 1 already done in symtable.  Hash can use 4 byte keys if
+	index into array, not pointer.  Tough for strings as they vary in
+	size.  Maybe just keep symtable.  lmheap could also have 4 byte
+	keys as array indices into an array of structs.  But we need
+	pointer to variable length hpairs.  Think of this 4 byte keys some
+	more.
+
+	* test15.out: Liberated all code from glib and procinfo.  TODO:
+	fix subs.c Output same.  DONE: remove mallinfo, it uses 32 bit
+	integers.  We have our own accounting and proc vss output now.
+	[3m15.05s 4,334,901,120 4,346,884,096b] lmheap_init done
+
+	zcat /work/upos/data/wsj.test1M.tok.gz | head -1 | fastsubs -n 100 /work/upos/run/wsj.lm.gz > test15.out 2> test15.log
+
+	* test14.out: trying to find the best way to report memory.  Here
+	are before and after lm load numbers (page size 4096 bytes, lm
+	load time 96 secs):
+	[t=195 m=4352221184] lmheap_init done
+
+	sbrk(0): 8M 456M  (x4 = 1825M 1793M)
+	stat.vss: 15M 1806M (bytes)
+	stat.rss: 206 437474 (pages)
+	stat.utime: 0 9366
+	stat.stime: 0 147
+	statm.size: 3891 441010 (pages=15M 1806M bytes)
+	statm.data: 520 437639 (pages=2M 1792M bytes data+stack)
+	status.1: VmPeak=VmSize=15564kB VmData=1224kB VmStk=856kB VmExe=32kB (text) VmLib=3172kB (shared libs)
+	status.2: VmPeak=2244M VmSize=1764M VmData=1749M VmStk=856kB VmExe=32kB VmLib=3172kB
+	mallinfo.arena: 135K 448M (system bytes)
+	mallinfo.uordblks: 1408 445M (in use bytes)
+	mallinfo.hblkhd: 1052K 1343M (arena+hblkhd=1791627264)
+	malloc_stats.total system bytes: (arena+hblkhd=1791627264)
+	malloc_stats.total in use bytes: (uordblks+hblkhd=1788366864)
+
+	* test13.out: using dalloc for darr_t and D_HASH.  The only system
+	malloc left is in file open and gets.  Code gets SEGFAULT with -O3
+	(specifically with the -ftree-vectorize) at _mknull(data[i++]).
+	Could be alignment related. -O2 or less is fine.  However the
+	bigger problem is excessive memory use without real free or
+	realloc during array/hash resizing, undoing it:
+	[t=200 m=6773850112] lmheap_init done
+
+	* test12.out: cleanup in dlib.c dlib.h.
+	[t=194 m=4352221184] lmheap_init done
+
+	* test11.out: testing fnv1a applied to ngrams.
+	[t=195 m=4353826816] lmheap_init done
+
+2013-12-28  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* test10.out: cleaned glib from fastsubs.
+	[t=186 m=4355215360] lmheap_init done
+
+	* test09.out: cleaned glib from lm and lmheap.  Memory use
+	higher probably due to hash doubling.  Output identical to
+	test.out.
+	[t=186 m=4355215360] lmheap_init done
+
+	* lmheap.c: Removing glib.
+	TODO: try heapify or a faster sort.
+
+	DONE: get gives pointer, forhash gives element, confusing?
+	forhash should give pointers, otherwise we cannot modify each
+	value, for example.
+
+	* lm.c: Removing glib.
+	TODO: dlib needs chomp, or split needs to take a set of strings
+	like strtok:
+	size_t len = strlen(tok[1]);
+	if (tok[1][len-1] == '\n') tok[1][len-1] = '\0';
+
+	TODO: die("Only one LM is allowed."); // why?
+	fastsubs takes an lm and initializes its internal state which
+	includes a static lmheap.  Should rearrange the code so lm and
+	lmheap can be initialized / freed by the caller.
+
+	Memory with new D_HASH:
+	$ lm-test /work/upos/run/wsj.lm.gz
+	[t=0 m=14077952] Loading model file /work/upos/run/wsj.lm.gz
+	[t=94 m=1807220736] ngram order = 4
+	[t=94 m=1807224832] logP=27427357
+	[t=94 m=1807228928] logB=7119768
+
+	Memory with glib hash from test08:
+	[t=0 m=14876672] Loading model file /work/upos/run/wsj.lm.gz
+	[t=91 m=1610895360] vocab:78499
+
+	DONE: memory I get from mallinfo seems off.  Should debug.  The
+	arrows are reported by mallinfo:
+	[t=0 m=14077952] Loading model file wsj.lm.gz
+	==> [t=0 m=832] sizeof(_lp_t)=16
+	==> [t=93 m=447640640] sizeof(_lp_t)=16
+	[t=93 m=1807220736] ngram order = 4
+	[t=93 m=1807224832] logP=27427357/67108864
+	[t=93 m=1807228928] logB=7119768/16777216
+	[t=93 m=1807233024] ==> Enter ngram:
+
+	Counts confirm the accuracy of new lm:
+	$ zcat wsj.lm.gz | head
+	ngram 1=78499
+	ngram 2=8587685
+	ngram 3=8768188
+	ngram 4=9992985
+	total 27427357
+	$ zcat wsj.lm.gz | awk -F'\t' '{print NF}' | rcount
+	20307589	2
+	7119768	3
+
+	TODO: try resizing less often (one more bit shift?).  ngram size
+	is 4 bytes, it could fit into one (in fact 3 bits).  logp and logb
+	can be part of the struct (but most logb is empty!).  struct packs
+	8+4 into 16 bytes so using float is useless.  Using 4 byte
+	pointers for ngrams (like sym_t) is not a good idea there could be
+	more than 4B?  Do the optimization after converting lmheap as
+	well.  We would not need length if we just kept the ngrams of
+	different lengths separate.  lmheap keys can point to full ngrams
+	and the index for wildcard instead of copying the whole ngram.
+
+	* test08.out: Heap is cleaned of glib.
+	[t=190 m=4006862848] lmheap_init done
+
+	* test07.out: Got rid of minialloc and foreach, replacing them
+	with dalloc and dlib.  It did help with memory a bit.  Next steps:
+	DONE: lm, lmheap, fastsubs, fastsubs-main
+	DONE: *-test, get rid of procinfo.
+	TODO: implement heap.c in dlib?
+	[t=187 m=4006862848] lmheap_init done
+
+	* test06.out: Inlined dalloc.  No difference.
+	[t=194 m=4019134464] lmheap_init done
+
+	* test05.out: Tried to optimize dalloc a bit.  Reallocing leftover
+	memory did not make a difference.  Should make dalloc inline.
+	Need declare internal vars and export them.  Should port
+	everything that uses minialloc to dalloc.
+	[t=193 m=4019134464] lmheap_init done
+
+	* test04.out: Replaced dalloc with regular malloc.  Cleaned
+	sentence.h and sentence.c to use standard C99 types.  Same output
+	as test.out.  This definitely spends more memory.  Going back to
+	dalloc.
+	[t=197 m=4837580800] lmheap_init done
+
+	* test03.out: cleaned up ngram.c and ngram.h from glib.  Same
+	output as test.out.  Replaced glib random with stdlib random.
+	Replaced minialloc with dalloc.  done: Try having a non-random
+	hash function.
+	[t=192 m=4019134464] lmheap_init done
+
+	* test02.out: this is the output after we converted GQuark to
+	sym_t in token.h.
+	[t=184 m=4013473792] lmheap_init done
+
+	* test01.out: this is the output with latest version of fastsubs.
+	Identical to test.out except one switch of equal substitutes.
+	[t=195 m=4032561152] lmheap_init done
+
+	* test.out: this is the output for first sentence from
+	/work/upos/run/wsj.sub.gz.
