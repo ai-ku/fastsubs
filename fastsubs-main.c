@@ -13,8 +13,7 @@
 
 
 int main(int argc, char **argv) {
-  const char *usage = "Usage: fastsubs [-s seed] [-n <n> | -p <p>] model.lm[.gz] < input.txt\n"
-	"Default seed is 1";
+  const char *usage = "Usage: fastsubs [-s seed] [-n <n> | -p <p>] model.lm[.gz] < input.txt\n";
   g_message_init();
   char buf[BUF];
   Token s[SMAX+1];
@@ -23,7 +22,6 @@ int main(int argc, char **argv) {
   int opt;
   guint opt_n = NMAX;
   gdouble opt_p = PMAX;
-  guint opt_s = 1; /* default seed */
   while ((opt = getopt(argc, argv, "p:n:s:")) != -1) {
     switch(opt) {
     case 'n':
@@ -32,17 +30,12 @@ int main(int argc, char **argv) {
     case 'p':
       opt_p = atof(optarg);
       break;
-    case 's':
-      opt_s = atoi(optarg);
-      break;
     default:
       g_error("%s", usage);
     }
   }
   if (optind >= argc)
     g_error("%s", usage);
-
-  srandom(opt_s);
 
   g_message("Get substitutes until count=%d OR probability=%g", opt_n, opt_p);
   g_message("Loading model file %s", argv[optind]);

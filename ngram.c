@@ -31,26 +31,11 @@ Ngram ngram_cpy(Ngram ngcopy, Ngram ng) {
 
 /** Ngram hash functions */
 
-static uint32_t ngram_hash_rnd[1 + MAX_NGRAM_ORDER];
-
-static void init_ngram_hash_rnd() {
-  uint32_t r;
-  if (*ngram_hash_rnd == 0) {
-    srandom(1);
-    for (int i = MAX_NGRAM_ORDER; i >= 0; i--) {
-      do {
-	r = random();
-      } while (r == 0);
-      ngram_hash_rnd[i] = r;
-    }
-  }
-}
-
-uint64_t ngram_hash(const Ngram ng) {
-  if (*ngram_hash_rnd == 0) init_ngram_hash_rnd();
-  uint64_t hash = 0;
-  for (int i = ngram_size(ng); i > 0; i--) {
-    hash += ng[i] * ngram_hash_rnd[i];
+uint64_t ngram_hash(const Ngram ng) { // fnv1a
+  size_t hash = 14695981039346656037ULL;
+  for (int i = ngram_size(ng); i >= 0; i--) {
+    hash ^= ng[i];
+    hash *= 1099511628211ULL;
   }
   return hash;
 }
