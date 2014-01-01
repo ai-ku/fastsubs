@@ -4,28 +4,25 @@ LIBS=-lm -lz
 
 all: fastsubs wordsub subs fastsubs-test lmheap-test lm-test sentence-test
 
-fastsubs: fastsubs-main.o fastsubs.o lm.o ngram.o sentence.o lmheap.o heap.o dlib.o
+fastsubs: fastsubs-main.o fastsubs.o lm.o ngram.o sentence.o heap.o dlib.o
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 fastsubs-main.o: fastsubs-main.c fastsubs.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-fastsubs-test: fastsubs-test.o fastsubs.o lm.o ngram.o sentence.o lmheap.o heap.o dlib.o
+fastsubs-test: fastsubs-test.o fastsubs.o lm.o ngram.o sentence.o heap.o dlib.o
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 fastsubs-test.o: fastsubs-test.c fastsubs.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-fastsubs.o: fastsubs.c fastsubs.h lm.h lmheap.h sentence.h ngram.h heap.h
+fastsubs.o: fastsubs.c fastsubs.h lm.h sentence.h ngram.h heap.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-lmheap-test: lmheap-test.o lmheap.o lm.o ngram.o heap.o dlib.o
+lmheap-test: lmheap-test.o lm.o ngram.o heap.o dlib.o
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
-lmheap-test.o: lmheap-test.c lmheap.h lm.h
-	$(CC) -c $(CFLAGS) $< -o $@
-
-lmheap.o: lmheap.c lmheap.h lm.h ngram.h token.h heap.h
+lmheap-test.o: lmheap-test.c lm.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 sentence-test: sentence-test.o sentence.o lm.o ngram.o dlib.o 

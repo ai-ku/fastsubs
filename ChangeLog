@@ -1,3 +1,75 @@
+2014-01-01  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* test21.out: Got rid of lmheap.c.
+
+	* test20.out: Got rid of static variables in lmheap.  Output same
+	as test.out (except one switch).
+
+	* TODO:
+	- Modify lmheap to have logB queues for positive values.
+	- Add a sum node so we can use logB queues, fix bug, publish.
+	- Remove static variables and implement multithreading.
+	- Separate the node types into different structures.
+	- Make lmheap more efficient by using pointer-and-hole keys.
+	- Implement heaps in dlib (2^n?)
+	- Put dot in dlib.
+
+2013-12-30  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* test19.out: Debugging the difference on the Sangyo sentence.
+	Old fastsubs output (/work/upos/bin/fastsubs):
+	[t=38 m=1618706432] lmheap_init start
+	[t=146 m=4031504384] lmheap_init done
+	[t=147 m=1832644608] calls=9 subs/call=100 pops/call=5184.44
+
+	New fastsubs output:
+	[1m32.65s 1,117,273,488 1,129,984,000b] lm_init done: logP=16x(27427357/33554432) logB=16x(7119768/8388608) toks=83530373
+	[3m30.01s 3,663,812,672 3,676,844,032b] lmheap_init done: 16x(29792712/67108864), hpairs=83530373
+	[3m30.55s 397,744 515,514,368b] calls=9 subs/call=100 pops/call=4512.44
+
+	DONE: Why does lm_init take three times as long in the new
+	version?  Using zcat 10 times faster than zlib (6 secs vs 50
+	secs).  Is it my getline?  No, if I use my getline for regular
+	files it is as fast as the GNU getline.  This seems to be a
+	problem only with the old version of zlib1g (1.2.3.4) installed on
+	altay and is documented on the internet.  The new version on
+	istanbul (1.2.7) does not have this problem.
+
+	Output difference:
+	Douglas -14.65023136 is missing in the new output.
+	instead ': -15.43919945' is added at the end.
+
+	Things are out of order in both old and new output!  (see Capital
+	below)
+	test19.out: Sangyo	Financial -11.73654747	<unk> -12.17256355	Bond -12.34492683	Capital -11.86773300	Mortgage -12.58209801
+	test19old.out:Sangyo	Financial -11.73654747	<unk> -12.17256355	Bond -12.34492683	Capital -11.86773300	Mortgage -12.58209801
+
+	test19subs.out: is the output by the old subs, it has the
+	probabilities for all the words.
+
+	test19sangyo.out,sort: is the Sangyo substitutes sorted.  The
+	values seem ok but the order is wrong.
+
+	* test18.out: Did the full wsj test set.
+	[1m31.34s 1,117,273,488 1,129,988,096b] lm_init done: logP=16x(27427357/33554432) logB=16x(7119768/8388608) toks=83530373
+	[3m15.89s 3,663,812,672 3,676,848,128b] lmheap_init done: 16x(29792712/67108864), hpairs=83530373
+	[4h44m25.47s 3,664,899,608 3,676,852,224b] free lmheap...
+	[4h44m25.61s 458,928 515,518,464b] calls=1222974 subs/call=100 pops/call=1510.1
+	TODO: investigate leftover memory
+
+	Most differences from the original wsj.sub.gz is the switching of
+	equal probability substitutes, except for the 23 following
+	suspicious cases in test18.diff.
+	TODO: compile subs.c to see who is right.
+
+	First comma in: If government or private watchdogs insist , however , on introducing greater friction between the markets -LRB- limits on price moves , two-tiered execution , higher margin requirements , taxation , etc. -RRB- , the end loser will be the markets themselves .
+
+	Sangyo in: Koizumi Sangyo Corp . -LRB- Japan -RRB- --
+
+	System in: A $ 550 million offering of Turner Broadcasting System Inc . high-yield securities sold last week by Drexel was increased $ 50 million because of strong demand .
+
+
+
 2013-12-29  Deniz Yuret  <dyuret@ku.edu.tr>
 
 	* TODO: all optimization will probably halve the memory
@@ -6,6 +78,11 @@
 	Faster sorting may reduce init time, but currently at 3 minutes it
 	is not a big cost.  The speed at which we spit out substitutes
 	will not get effected.
+
+	* test17.out: I moved the hash resize from 75% to 87.5% to gain
+	some memory.
+	[1m31.22s 1,117,273,488 1,129,988,096b] lm_init done: logP=16x(27427357/33554432) logB=16x(7119768/8388608) toks=83530373
+	[3m15.81s 3,663,812,672 3,676,852,224b] lmheap_init done: 16x(29792712/67108864), hpairs=83530373
 
 	* test16.out: Printing out hash sizes.
 	[1m34.73s 1,788,362,128 1,801,076,736b] lm_init done: logP=16x(27427357/67108864) logB=16x(7119768/16777216) toks=83530373
@@ -23,8 +100,9 @@
 	more.
 
 	* test15.out: Liberated all code from glib and procinfo.  TODO:
-	fix subs.c Output same.  DONE: remove mallinfo, it uses 32 bit
-	integers.  We have our own accounting and proc vss output now.
+	fix subs.c. Output same as test.out.  DONE: remove mallinfo, it
+	uses 32 bit integers.  We have our own accounting and proc vss
+	output now.  New output has time, dallocsize, vsize.
 	[3m15.05s 4,334,901,120 4,346,884,096b] lmheap_init done
 
 	zcat /work/upos/data/wsj.test1M.tok.gz | head -1 | fastsubs -n 100 /work/upos/run/wsj.lm.gz > test15.out 2> test15.log

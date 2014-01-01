@@ -4,25 +4,6 @@
 #include "sentence.h"
 #include "heap.h"
 
-/**Typedefs*/
-typedef enum {
-  ROOT,		  /* root level node, representing e.g. abxcd -> abx + bxc + xcd */
-  ALT,            /* alternatives e.g. abx -> abx | [ab]bx | [ab][b]x; where [] represents bow */
-  LOGP		  /* leaf node e.g. [bx] or abx */
-} NodeType;
-
-typedef struct _FSnode {
-  NodeType type;
-  Ngram ngram;
-  struct _FSnode *terms;
-  int nterms;
-  float offset;
-  Heap heap;
-  darr_t hash;
-  float umax;
-  int imax;
-} *FSnode;
-
 /** fastsubs(): Fills the pre-allocated subs array (should have nvocab
  *  elements to be safe) with substitutes of word j in sentence s
  *  according to LMheap h.  The substitutes are sorted by descending
@@ -35,7 +16,6 @@ typedef struct _FSnode {
  *  number of entries placed in the subs array is returned.
  */
 int fastsubs(Hpair *subs, Sentence s, int j, LM lm, double plimit, uint32_t nlimit);
-void fastsubs_free();
 
 extern uint64_t fs_niter; /* number of pops for performance analysis */
 

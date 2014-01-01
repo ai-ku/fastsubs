@@ -38,7 +38,7 @@ float sentence_logp(Sentence s, int j, LM lm) {
   assert((j >= 1) && (j <= sentence_size(s))); 
   if (j == 1) return (s[j] == SOS ? 0 : SRILM_LOG0); /* s[1] always SOS */
   if (s[j] == SOS) return (j == 1 ? 0 : SRILM_LOG0); /* SOS is only in s[1] */
-  int i = j - lm->order;
+  int i = j - lm_order(lm);
   if (i < 0) i = 0;
   float ll = 0;
   while (i < j) {

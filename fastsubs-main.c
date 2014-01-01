@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "fastsubs.h"
 #include "heap.h"
+#include "lm.h"
 #include "dlib.h"
 
 #define BUF  (1<<16)		/* max input line length */
@@ -37,13 +38,15 @@ int main(int argc, char **argv) {
   msg("Get substitutes until count=%d OR probability=%g", opt_n, opt_p);
   msg("Loading model file %s", argv[optind]);
   LM lm = lm_init(argv[optind]);
-  msg("vocab:%d", lm->nvocab);
-  if (lm->nvocab < opt_n){
-       opt_n = lm->nvocab - 1;
+  uint32_t order = lm_order(lm);
+  uint32_t nvocab = lm_nvocab(lm);
+  msg("vocab:%d", nvocab);
+  if (nvocab < opt_n){
+       opt_n = nvocab - 1;
        msg("[Number of substitutes > vocabulary size] set to maximum substitute number=%d", opt_n - 1);
   }
-  Hpair *subs = dalloc(lm->nvocab * sizeof(Hpair));
-  msg("ngram order = %d\n==> Enter sentences:\n", lm->order);
+  Hpair *subs = dalloc(nvocab * sizeof(Hpair));
+  msg("ngram order = %d\n==> Enter sentences:\n", order);
   int fs_ncall = 0;
   int fs_nsubs = 0;
   while(fgets(buf, BUF, stdin)) {
@@ -58,8 +61,6 @@ int main(int argc, char **argv) {
       printf("\n");
     }
   }
-  msg("free lmheap...");
-  fastsubs_free();
   msg("free lm...");
   lm_free(lm);
   msg("free symtable...");
