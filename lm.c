@@ -18,8 +18,6 @@ struct _LMS {
 typedef struct NFS { Ngram key; float val; } *NF; // elements are ngram-float pairs
 #define _nf_init(ng) ((struct NFS) { (ng), 0 }) // ng must be already allocated
 D_HASH(_nf_, struct NFS, Ngram, ngram_equal, ngram_hash, d_keyof, _nf_init, d_keyisnull, d_keymknull)
-#define _logP(lm, ng) (_nf_get(((lm)->phash),(ng),1)->val)
-#define _logB(lm, ng) (_nf_get(((lm)->whash),(ng),1)->val)
 
 /* Define ngram-tokenHeap hash */
 typedef struct NHS { Ngram key; Heap val; } *NH; // elements are ngram-heap pairs
@@ -27,7 +25,8 @@ typedef struct NHS { Ngram key; Heap val; } *NH; // elements are ngram-heap pair
 D_HASH(_nh_, struct NHS, Ngram, ngram_equal, ngram_hash, d_keyof, _nh_init, d_keyisnull, d_keymknull)
 
 static void lm_read(LM lm, const char *lmfile);
-static void lm_heap_init(LM lm);
+static void lm_pheap_init(LM lm);
+static void lm_wheap_init(LM lm);
 
 LM lm_init(const char *lmfile) {
   LM lm = _d_malloc(sizeof(struct _LMS));
@@ -40,10 +39,12 @@ LM lm_init(const char *lmfile) {
   msg("lm_init: reading %s...", lmfile);
   lm_read(lm, lmfile);
   msg("lm_init: initializing heaps...");
-  lm_heap_init(lm);
-  msg("lm_init done: logP=%zux(%zu/%zu) logB=%zux(%zu/%zu) toks=%zu", 
-      sizeof(struct NFS), len(lm->phash), cap(lm->phash), 
-      sizeof(struct NFS), len(lm->whash), cap(lm->whash));
+  lm_pheap_init(lm);
+  lm_wheap_init(lm);
+  msg("lm_init done: NF=%zu logP=%zu/%zu logB=%zu/%zu NH=%zu pheap=%zu/%zu bheap=%zu/%zu", 
+      sizeof(struct NFS), len(lm->phash), cap(lm->phash), len(lm->whash), cap(lm->whash),
+      sizeof(struct NHS), len(lm->pheap), cap(lm->pheap), len(lm->wheap), cap(lm->wheap)
+      );
   return lm;
 }
 
@@ -102,16 +103,16 @@ static void lm_read(LM lm, const char *lmfile) {
     for (int i = ngram_size(ng); i > 0; i--) {
       if (ng[i] > lm->nvocab) lm->nvocab = ng[i];
     }
-    _logP(lm, ng) = f;
+    _nf_get(lm->phash, ng, true)->val = f;
     if (ntok == 3) {
       f = (float) strtof(tok[2], NULL);
       assert(errno == 0);
-      _logB(lm, ng) = f;
+      _nf_get(lm->whash, ng, true)->val = f;
     }
   }
 }
 
-static void lm_heap_init(LM lm) {
+static void lm_pheap_init(LM lm) {
   msg("count logP");
   forhash (NF, nf, lm->phash, d_keyisnull) {
     Ngram ng = nf->key;
@@ -145,16 +146,55 @@ static void lm_heap_init(LM lm) {
     }
   }
 
-  size_t hpair_cnt = 0;
   msg("sort logP_heap");
   forhash (NH, nh, lm->pheap, d_keyisnull) {
     Heap heap = nh->val;
     assert(heap != NULL && heap_size(heap) > 0);
     heap_sort_max(heap);
-    hpair_cnt += heap_size(heap);
   }
-
-  msg("lm_heap_init done: NHS=%zu logPheap=%zu/%zu logWheap=%zu/%zu hpairs=%zu", 
-      sizeof(struct NHS), len(lm->pheap), cap(lm->pheap), len(lm->wheap), cap(lm->wheap), hpair_cnt);
 }
 
+static void lm_wheap_init(LM lm) {
+  msg("count logB");
+  forhash (NF, nf, lm->whash, d_keyisnull) {
+    Ngram ng = nf->key;
+    float f = nf->val;
+    if (f <= 0) continue;	// we only need positive cases, unseen words have 0 logB
+    for (int i = ngram_size(ng); i > 0; i--) {
+      Token ng_i = ng[i];
+      ng[i] = NULLTOKEN;
+      NH nh = _nh_get(lm->wheap, ng, true);
+      nh->val = (Heap)(1 + ((size_t)(nh->val)));
+      ng[i] = ng_i;
+    }
+  }
+
+  msg("alloc logB_heap");
+  forhash (NH, nh, lm->wheap, d_keyisnull) {
+    size_t n = ((size_t) nh->val);
+    Heap heap = dalloc(sizeof(Hpair) * (1 + n));
+    heap_size(heap) = 0;
+    nh->val = heap;
+  }
+
+  msg("insert logB");
+  forhash (NF, nf, lm->whash, d_keyisnull) {
+    Ngram ng = nf->key;
+    float f = nf->val;
+    if (f <= 0) continue;	// we only need positive cases, unseen words have 0 logB
+    for (int i = ngram_size(ng); i > 0; i--) {
+      Token ng_i = ng[i];
+      ng[i] = NULLTOKEN;
+      NH nh = _nh_get(lm->wheap, ng, false);
+      ng[i] = ng_i;
+      heap_insert_min(nh->val, ng_i, f);
+    }
+  }
+
+  msg("sort logB_heap");
+  forhash (NH, nh, lm->wheap, d_keyisnull) {
+    Heap heap = nh->val;
+    assert(heap != NULL && heap_size(heap) > 0);
+    heap_sort_max(heap);
+  }
+}
