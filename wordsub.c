@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     default: fputs(usage, stderr); exit(0);
     }
   }
-  forline(buf, "") {
+  forline(buf, NULL) {
     double sum = 0;
     int col = 0;
     char *word = NULL;

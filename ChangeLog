@@ -4,7 +4,8 @@
 	unordered substitutes using test26-check.pl.  None detected.
 	Checked the old wsj.sub.gz.  31 lines have unordered substitutes
 	(saved in test26.unordered).  There are a total of 66 lines that
-	differ between the two files after normalization.
+	differ between the two files after normalization.  TODO: lm_free
+	does not seem to get back to 0 memory in lm-test.c.
 
 2014-01-05  Deniz Yuret  <dyuret@ku.edu.tr>
 

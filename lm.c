@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "dlib.h"
 #include "ngram.h"
+#include "sentence.h"
 #include "heap.h"
 #include "lm.h"
 

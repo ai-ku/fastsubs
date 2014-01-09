@@ -1,8 +1,9 @@
 CC=gcc
 CFLAGS=-O3 -save-temps -D_GNU_SOURCE -Wall -std=c99 -pedantic
 LIBS=-lm -lz
+TARGETS=fastsubs fastsubs-test lmheap-test lm-test sentence-test wordsub
 
-all: fastsubs wordsub subs fastsubs-test lmheap-test lm-test sentence-test
+all: ${TARGETS}
 
 fastsubs: fastsubs-main.o fastsubs.o lm.o ngram.o sentence.o heap.o dlib.o
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
@@ -19,28 +20,28 @@ fastsubs-test.o: fastsubs-test.c fastsubs.h
 fastsubs.o: fastsubs.c fastsubs.h lm.h sentence.h ngram.h heap.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-lmheap-test: lmheap-test.o lm.o ngram.o heap.o dlib.o
+lmheap-test: lmheap-test.o lm.o ngram.o heap.o dlib.o sentence.o
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 lmheap-test.o: lmheap-test.c lm.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-sentence-test: sentence-test.o sentence.o lm.o ngram.o dlib.o 
-	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
-
-sentence-test.o: sentence-test.c sentence.h
-	$(CC) -c $(CFLAGS) $< -o $@
-
-sentence.o: sentence.c sentence.h token.h lm.h dlib.h
-	$(CC) -c $(CFLAGS) $< -o $@
-
-lm-test: lm-test.o lm.o ngram.o dlib.o
+lm-test: lm-test.o lm.o ngram.o dlib.o heap.o sentence.o
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 lm-test.o: lm-test.c lm.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 lm.o: lm.c lm.h ngram.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+sentence-test: sentence-test.o sentence.o lm.o ngram.o dlib.o heap.o
+	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
+
+sentence-test.o: sentence-test.c sentence.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+sentence.o: sentence.c sentence.h token.h lm.h dlib.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 ngram.o: ngram.c ngram.h token.h dlib.h
@@ -55,14 +56,8 @@ wordsub: wordsub.o dlib.o
 wordsub.o: wordsub.c dlib.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-subs: subs.o dlib.o
-	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
-
-subs.o: subs.c dlib.h procinfo.h ghashx.h
-	$(CC) -c $(CFLAGS) $< -o $@
-
 dlib.o: dlib.c dlib.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	-rm -f *.o *.i *.s *~ fastsubs fastsubs-test lmheap-test sentence-test lm-test wordsub subs
+	-rm -f *.o *.i *.s *~ ${TARGETS}

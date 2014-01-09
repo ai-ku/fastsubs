@@ -1,4 +1,4 @@
-FASTSUBS		            Copyright (c) 2012, Deniz Yuret
+FASTSUBS		            Copyright (c) 2012-2014 Deniz Yuret
 
 Usage: fastsubs [-n <n> | -p <p>] model.lm[.gz] < input.txt
 
@@ -13,17 +13,24 @@ their unnormalized probabilities in the following format:
 
 word <tab> sub1 <space> lprob1 <tab> sub2 <space> lprob2 <tab> ...
 
-Please see the file LICENSE for terms of use.  A description of the
-algorithm can be found in http://arxiv.org/abs/1205.5407v1.  To
-compile you need the glib2 library.  Otherwise everything is standard
-C, so just typing make should give you an executable.
+Please see the file LICENSE for terms of use.  A paper with the
+description of the algorithm and other related resources can be found
+at http://goo.gl/jzKH0.  The code is mostly C99 compliant and has been
+compiled and tested on a linux system with gcc.  The few GNU
+extensions used are optional and can be turned off by editing the
+beginning of dlib.h.
+
+Update of Jan 9, 2014: The latest version gets rid of all glib
+dependencies (glib is broken, it blows up your code without warning if
+your arrays or hashes get too big).  It also fixes a bug: The previous
+versions of the code and the paper assumed that the log back-off
+weights were upper bounded by 0 which they are not.  In my standard
+test of generating the top 100 substitutes for all the 1,222,974
+positions in the PTB, this caused a total of 66 low probability
+substitutes to be missed and 31 to be listed out of order.
 
 Other test and utility executables that can be built using the
 Makefile:
-
-* subs: Slow subs algorithm that computes the probability for each
-  word in the vocabulary as a candidate substitute.  The top K words
-  and their probabilities should match the fastsubs output.
 
 * wordsub: Takes the output of fastsubs and samples random substitutes
   for each word.
@@ -31,9 +38,9 @@ Makefile:
 * fastsubs-test: Takes a model file and interactively runs fastsubs on
   sentences typed by the user.
 
-* lmheap-test: Takes a model file and tests the lmheap data structure
-  by interactively reading n-grams from the user and printing out the
-  contents of the heap for each position.
+* lmheap-test: Takes a model file and tests the heaps in the lm data
+  structure by interactively reading n-grams from the user and
+  printing out the contents of the heap for each position.
 
 * sentence-test: Takes a model file and tests the sentence and lm data
   structures by reading sentences from the user and printing out logp

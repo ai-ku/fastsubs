@@ -4,16 +4,17 @@
 #include "ngram.h"
 
 int main(int argc, char **argv) {
-  char buf[1024];
   msg("Loading model file %s", argv[1]);
   LM lm = lm_init(argv[1]);
-  msg("ngram order = %d", lm->order);
-  msg("logP=%llu/%llu", len(lm->logP), cap(lm->logP));
-  msg("logB=%llu/%llu", len(lm->logB), cap(lm->logB));
   msg("==> Enter ngram:");
-  while(fgets(buf, 1024, stdin)) {
+  forline (buf, NULL) {
     Ngram ng = ngram_from_string(buf);
-    msg("logP=%.9g logB=%.9g", lm_logP(lm, ng), lm_logB(lm, ng));
+    msg("logP=%.9g logB=%.9g", lm_phash(lm, ng, 1, ngram_size(ng)), lm_bhash(lm, ng, 1, ngram_size(ng)));
     msg("==> Enter ngram:");
   }
+  msg("Free lm");
+  lm_free(lm);
+  msg("Free tmp space");
+  dfreeall();
+  msg("done");
 }
