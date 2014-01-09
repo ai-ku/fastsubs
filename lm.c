@@ -9,9 +9,9 @@ struct _LMS {
   uint32_t order;
   uint32_t nvocab;
   darr_t phash;
-  darr_t whash;
+  darr_t bhash;
   darr_t pheap;
-  darr_t wheap;
+  darr_t bheap;
 };
 
 /* Define ngram-logp/logb hash */
@@ -26,53 +26,89 @@ D_HASH(_nh_, struct NHS, Ngram, ngram_equal, ngram_hash, d_keyof, _nh_init, d_ke
 
 static void lm_read(LM lm, const char *lmfile);
 static void lm_pheap_init(LM lm);
-static void lm_wheap_init(LM lm);
+static void lm_bheap_init(LM lm);
 
 LM lm_init(const char *lmfile) {
   LM lm = _d_malloc(sizeof(struct _LMS));
   lm->phash = _nf_new(0);
-  lm->whash = _nf_new(0);
+  lm->bhash = _nf_new(0);
   lm->pheap = _nh_new(0);
-  lm->wheap = _nh_new(0);
+  lm->bheap = _nh_new(0);
   lm->order = 0;
   lm->nvocab = 0;
   msg("lm_init: reading %s...", lmfile);
   lm_read(lm, lmfile);
   msg("lm_init: initializing heaps...");
   lm_pheap_init(lm);
-  lm_wheap_init(lm);
+  lm_bheap_init(lm);
   msg("lm_init done: NF=%zu logP=%zu/%zu logB=%zu/%zu NH=%zu pheap=%zu/%zu bheap=%zu/%zu", 
-      sizeof(struct NFS), len(lm->phash), cap(lm->phash), len(lm->whash), cap(lm->whash),
-      sizeof(struct NHS), len(lm->pheap), cap(lm->pheap), len(lm->wheap), cap(lm->wheap)
+      sizeof(struct NFS), len(lm->phash), cap(lm->phash), len(lm->bhash), cap(lm->bhash),
+      sizeof(struct NHS), len(lm->pheap), cap(lm->pheap), len(lm->bheap), cap(lm->bheap)
       );
   return lm;
 }
 
 void lm_free(LM lm) {
   _nf_free(lm->phash);
-  _nf_free(lm->whash);
+  _nf_free(lm->bhash);
   _nh_free(lm->pheap);
-  _nh_free(lm->wheap);
+  _nh_free(lm->bheap);
   _d_free(lm);
 }
 
-float lm_logP(LM lm, Ngram ng) {
-  NF p = _nf_get(lm->phash, ng, false);
+float lm_logp(LM lm, Sentence s, uint32_t i) {
+  assert((i >= 1) && (i <= sentence_size(s))); 
+  if (i == 1) return (s[i] == SOS ? 0 : SRILM_LOG0); /* s[1] always SOS */
+  if (s[i] == SOS) return (i == 1 ? 0 : SRILM_LOG0); /* SOS is only in s[1] */
+  float logp = 0; // TODO: this should do internal sum in double
+  uint32_t len = lm_order(lm);
+  if (i < len) len = i;
+  while (len >= 1) {
+    uint32_t start = i - len + 1;
+    float lp = lm_phash(lm, s, start, len);
+    if (lp != SRILM_LOG0) {
+      logp += lp;
+      break;
+    } else {
+      assert(len > 1);
+      logp += lm_bhash(lm, s, start, len-1);
+      len--;
+    }
+  }
+  assert(logp < 0);
+  assert(logp > SRILM_LOG0);
+  return logp;
+}
+
+float lm_phash(LM lm, Sentence s, uint32_t i, uint32_t n) {
+  uint32_t save = s[i-1];
+  s[i-1] = n;
+  NF p = _nf_get(lm->phash, &s[i-1], false);
+  s[i-1] = save;
   return (p == NULL ? SRILM_LOG0 : p->val);
 }
 
-float lm_logB(LM lm, Ngram ng) {
-  NF p = _nf_get(lm->whash, ng, false);
+float lm_bhash(LM lm, Sentence s, uint32_t i, uint32_t n) {
+  uint32_t save = s[i-1];
+  s[i-1] = n;
+  NF p = _nf_get(lm->bhash, &s[i-1], false);
+  s[i-1] = save;
   return (p == NULL ? 0 : p->val);
 }
 
-Heap lm_logP_heap(LM lm, Ngram ng) {
-  NH p = _nh_get(lm->pheap, ng, false);
+Heap lm_pheap(LM lm, Sentence s, uint32_t i, uint32_t n) {
+  uint32_t save = s[i-1];
+  s[i-1] = n;
+  NH p = _nh_get(lm->pheap, &s[i-1], false);
+  s[i-1] = save;
   return (p == NULL ? NULL : p->val);
 }
 
-Heap lm_logB_heap(LM lm, Ngram ng) {
-  NH p = _nh_get(lm->wheap, ng, false);
+Heap lm_bheap(LM lm, Sentence s, uint32_t i, uint32_t n) {
+  uint32_t save = s[i-1];
+  s[i-1] = n;
+  NH p = _nh_get(lm->bheap, &s[i-1], false);
+  s[i-1] = save;
   return (p == NULL ? NULL : p->val);
 }
 
@@ -107,7 +143,7 @@ static void lm_read(LM lm, const char *lmfile) {
     if (ntok == 3) {
       f = (float) strtof(tok[2], NULL);
       assert(errno == 0);
-      _nf_get(lm->whash, ng, true)->val = f;
+      _nf_get(lm->bhash, ng, true)->val = f;
     }
   }
 }
@@ -154,23 +190,23 @@ static void lm_pheap_init(LM lm) {
   }
 }
 
-static void lm_wheap_init(LM lm) {
+static void lm_bheap_init(LM lm) {
   msg("count logB");
-  forhash (NF, nf, lm->whash, d_keyisnull) {
+  forhash (NF, nf, lm->bhash, d_keyisnull) {
     Ngram ng = nf->key;
     float f = nf->val;
     if (f <= 0) continue;	// we only need positive cases, unseen words have 0 logB
     for (int i = ngram_size(ng); i > 0; i--) {
       Token ng_i = ng[i];
       ng[i] = NULLTOKEN;
-      NH nh = _nh_get(lm->wheap, ng, true);
+      NH nh = _nh_get(lm->bheap, ng, true);
       nh->val = (Heap)(1 + ((size_t)(nh->val)));
       ng[i] = ng_i;
     }
   }
 
   msg("alloc logB_heap");
-  forhash (NH, nh, lm->wheap, d_keyisnull) {
+  forhash (NH, nh, lm->bheap, d_keyisnull) {
     size_t n = ((size_t) nh->val);
     Heap heap = dalloc(sizeof(Hpair) * (1 + n));
     heap_size(heap) = 0;
@@ -178,21 +214,21 @@ static void lm_wheap_init(LM lm) {
   }
 
   msg("insert logB");
-  forhash (NF, nf, lm->whash, d_keyisnull) {
+  forhash (NF, nf, lm->bhash, d_keyisnull) {
     Ngram ng = nf->key;
     float f = nf->val;
     if (f <= 0) continue;	// we only need positive cases, unseen words have 0 logB
     for (int i = ngram_size(ng); i > 0; i--) {
       Token ng_i = ng[i];
       ng[i] = NULLTOKEN;
-      NH nh = _nh_get(lm->wheap, ng, false);
+      NH nh = _nh_get(lm->bheap, ng, false);
       ng[i] = ng_i;
       heap_insert_min(nh->val, ng_i, f);
     }
   }
 
   msg("sort logB_heap");
-  forhash (NH, nh, lm->wheap, d_keyisnull) {
+  forhash (NH, nh, lm->bheap, d_keyisnull) {
     Heap heap = nh->val;
     assert(heap != NULL && heap_size(heap) > 0);
     heap_sort_max(heap);

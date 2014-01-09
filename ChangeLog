@@ -1,4 +1,26 @@
+2014-01-09  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* test26.out: Ran it on the whole wsj dataset.  Checked for
+	unordered substitutes using test26-check.pl.  None detected.
+	Checked the old wsj.sub.gz.  31 lines have unordered substitutes
+	(saved in test26.unordered).  There are a total of 66 lines that
+	differ between the two files after normalization.
+
+2014-01-05  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* test25.out: Ran it on the Sangyo sentence and it fixed the badly
+	ordered substitutes.
+
+	* test24.out: Turned on logB_heaps, still same output for zcat
+	/work/upos/data/wsj.test1M.tok.gz | head -1 | fastsubs -n 100
+	/work/upos/run/wsj.lm.gz > test24.out
+
+	* test23.out: Rewrote fastsubs to use the logB_heap.  Confirmed
+	same output when logB_heaps are ignored.
+
 2014-01-01  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* test22.out: Implemented logB_heap.
 
 	* test21.out: Got rid of lmheap.c.
 

@@ -3,6 +3,8 @@
 #include "lm.h"
 #include "sentence.h"
 #include "heap.h"
+typedef uint32_t u32;
+typedef uint64_t u64;
 
 /** fastsubs(): Fills the pre-allocated subs array (should have nvocab
  *  elements to be safe) with substitutes of word j in sentence s
@@ -15,7 +17,7 @@
  *  satisfied, so just pass 0 for a limit you do not care about.  The
  *  number of entries placed in the subs array is returned.
  */
-int fastsubs(Hpair *subs, Sentence s, int j, LM lm, double plimit, uint32_t nlimit);
+u32 fastsubs(Hpair *subs, Sentence s, u32 target, LM lm, double plimit, u32 nlimit);
 
 extern uint64_t fs_niter; /* number of pops for performance analysis */
 
