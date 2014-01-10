@@ -19,6 +19,4 @@ typedef uint64_t u64;
  */
 u32 fastsubs(Hpair *subs, Sentence s, u32 target, LM lm, double plimit, u32 nlimit);
 
-extern uint64_t fs_niter; /* number of pops for performance analysis */
-
 #endif
