@@ -35,5 +35,7 @@ int main(int argc, char **argv) {
   lm_free(lm);
   msg("Freeing tmp space");
   dfreeall();
+  msg("Freeing symtable");
+  symtable_free();
   msg("done");
 }
