@@ -1,9 +1,15 @@
 CC=gcc
 CFLAGS=-O3 -save-temps -D_GNU_SOURCE -Wall -std=c99 -pedantic
 LIBS=-lm -lz
-TARGETS=fastsubs fastsubs-test lmheap-test lm-test sentence-test wordsub
+TARGETS=fastsubs fastsubs-omp fastsubs-test lmheap-test lm-test sentence-test wordsub
 
 all: ${TARGETS}
+
+fastsubs-omp: fastsubs-omp.o fastsubs.o lm.o ngram.o sentence.o heap.o dlib.o
+	$(CC) -fopenmp $(CFLAGS) $^ $(LIBS) -o $@
+
+fastsubs-omp.o: fastsubs-omp.c fastsubs.h
+	$(CC) -c -fopenmp $(CFLAGS) $< -o $@
 
 fastsubs: fastsubs-main.o fastsubs.o lm.o ngram.o sentence.o heap.o dlib.o
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
