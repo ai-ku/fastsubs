@@ -13,3 +13,4 @@ wsj*
 fastsubs-test
 lm-test
 lmheap-test
+fastsubs-omp
