@@ -40,9 +40,12 @@ LM lm_init(const char *lmfile) {
   lm_read(lm, lmfile);
   lm_pheap_init(lm);
   lm_bheap_init(lm);
-  dbg("lm_init done: NF=%zu logP=%zu/%zu logB=%zu/%zu NH=%zu pheap=%zu/%zu bheap=%zu/%zu", 
-      sizeof(struct NFS), len(lm->phash), cap(lm->phash), len(lm->bhash), cap(lm->bhash),
-      sizeof(struct NHS), len(lm->pheap), cap(lm->pheap), len(lm->bheap), cap(lm->bheap)
+  dbg("lm_init done: order=%u nvocab=%u phash=%zux%zu/%zu bhash=%zux%zu/%zu pheap=%zux%zu/%zu bheap=%zux%zu/%zu", 
+      lm->order, lm->nvocab,
+      sizeof(struct NFS), len(lm->phash), cap(lm->phash), 
+      sizeof(struct NFS), len(lm->bhash), cap(lm->bhash),
+      sizeof(struct NHS), len(lm->pheap), cap(lm->pheap), 
+      sizeof(struct NHS), len(lm->bheap), cap(lm->bheap)
       );
   return lm;
 }
