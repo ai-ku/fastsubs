@@ -12,7 +12,7 @@
 
 
 int main(int argc, char **argv) {
-  const char *usage = "Usage: fastsubs [-s seed] [-n <n> | -p <p>] model.lm[.gz] < input.txt\n";
+  const char *usage = "Usage: fastsubs [-n <n> | -p <p>] model.lm[.gz] < input.txt\n";
   char buf[BUF];
   Token s[SMAX+1];
   char *w[SMAX+1];
@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
   int opt;
   uint32_t opt_n = NMAX;
   double opt_p = PMAX;
-  while ((opt = getopt(argc, argv, "p:n:s:")) != -1) {
+  while ((opt = getopt(argc, argv, "p:n:")) != -1) {
     switch(opt) {
     case 'n':
       opt_n = atoi(optarg);
