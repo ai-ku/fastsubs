@@ -131,9 +131,9 @@ typedef struct sum_s {
 } *sum_q;
 
 static sum_q sum_init(Sentence s, u32 target, u32 ngram_start, u32 ngram_end, u32 logp_start, LM lm) {
+#ifndef NDEBUG
   u32 order = lm_order(lm);
   u32 ssize = sentence_size(s);
-#ifndef NDEBUG
   assert(target >= 1);
   assert(target <= ssize);
   assert(ngram_start >= 1);
@@ -200,9 +200,9 @@ typedef struct alt_s {
 } *alt_q;
 
 static alt_q alt_init(Sentence s, u32 target, u32 ngram_start, u32 ngram_end, LM lm) {
+#ifndef NDEBUG
   u32 order = lm_order(lm);
   u32 ssize = sentence_size(s);
-#ifndef NDEBUG
   assert(target >= 1);
   assert(target <= ssize);
   assert(ngram_start >= 1);
@@ -350,9 +350,9 @@ placed in the subs array is returned.
  */
 
 u32 fastsubs(Hpair *subs, Sentence s, u32 target, LM lm, double plimit, u32 nlimit) {
-  u32 ssize = sentence_size(s);
   u32 nvocab = lm_nvocab(lm);
 #ifndef NDEBUG
+  u32 ssize = sentence_size(s);
   assert(target >= 1);
   assert(target <= ssize);
 #endif
