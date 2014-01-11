@@ -14,8 +14,8 @@
 
 typedef struct sent_s {
   str_t sstr;			// string for the sentence
-  Sentence sent;		// token array for the sentence
   str_t *wstr;			// wstr[i] is the string for i'th word (pointer into sstr)
+  Sentence sent;		// token array for the sentence
   Heap *subs;			// subs[i] is the sub/score array for i'th word
 } *sent_t;
 
@@ -38,7 +38,6 @@ static void sent_free(sent_t s) {
   _d_free(s->wstr);
   _d_free(s->sent);
   free(s->sstr);
-  usleep(random() % 1000000);
 }
 
 static void sent_alloc(sent_t s, u32 opt_n) {
@@ -57,16 +56,13 @@ static void sent_alloc(sent_t s, u32 opt_n) {
   }
 }
 
-static void sent_process(sent_t s, u32 opt_n) {
+static void sent_process(sent_t s, LM lm, u32 opt_n, double opt_p) {
   sent_alloc(s, opt_n);
   u32 ssize = sentence_size(s->sent);
   for (int i = 2; i <= ssize; i++) {
-    s->subs[i][0] = (struct _Hpair) {opt_n, 0.0};
-    for (int j = 1; j <= opt_n; j++) {
-      s->subs[i][j] = (struct _Hpair) {SOS, 0.0};
-    }
+    // TODO: fastsubs should treat the subs array as a heap and put the size in [0]
+    heap_size(s->subs[i]) = fastsubs(&(s->subs[i][1]), s->sent, i, lm, opt_p, opt_n);
   }
-  usleep(random() % 1000000);
 }
 
 static void sent_write(sent_t s) {
@@ -118,7 +114,7 @@ int main(int argc, char **argv) {
     if (nsent == 0) break;
 #pragma omp parallel for
     for (int i = 0; i < nsent; i++) {
-      sent_process(&s[i], opt_n);
+      sent_process(&s[i], lm, opt_n, opt_p);
     }
     for (int i = 0; i < nsent; i++) {
       sent_write(&s[i]);
@@ -127,7 +123,9 @@ int main(int argc, char **argv) {
     for (int i = 0; i < nsent; i++) {
       sent_free(&s[i]);
     }
+    fputc('.', stderr);
   }
+  fputc('\n', stderr);
   msg("Freeing sentence structs.");
   _d_free(s);
   msg("Freeing lm");
@@ -139,51 +137,3 @@ int main(int argc, char **argv) {
   msg("done");
 }
 
-#if 0
-
-static void batch_alloc(sent_t *s, int nsent, u32 opt_n) {
-  char buf[BUF];
-  Token s[SMAX+1];
-  char *w[SMAX+1];
-  int nsent = 0;
-  for (nsent = 0; nsent < BATCHSIZE; nsent++) {
-    if (fgets(buf, BUF, stdin) == NULL) break;
-    sstr[nsent] = strdup(buf);
-    int nword = sentence_from_string(s, sstr[nsent], SMAX, w);
-    sent[nsent] = (Token *) _d_malloc((1 + nword) * sizeof(Token));
-    wstr[nsent] = (str_t *) _d_malloc((1 + nword) * sizeof(str_t));
-    subs[nsent] = (Token **) _d_malloc((1 + nword) * sizeof(Token*));
-    for (int i = 0; i <= nword; i++) {
-      sent[nsent][i] = s[i];
-      wstr[nsent][i] = w[i];
-      subs[nsent][i] = _d_malloc(opt_n * sizeof(Hpair));
-    }
-  }
-  return nsent;
-}
-
-  Hpair *subs = dalloc(nvocab * sizeof(Hpair));
-  msg("ngram order = %d\n==> Enter sentences:\n", order);
-  int fs_ncall = 0;
-  int fs_nsubs = 0;
-  while(fgets(buf, BUF, stdin)) {
-    int n = sentence_from_string(s, buf, SMAX, w);
-    for (int i = 2; i <= n; i++) {
-      int nsubs = fastsubs(subs, s, i, lm, opt_p, opt_n);
-      fs_ncall++; fs_nsubs += nsubs;
-      fputs(w[i], stdout);
-      for (int j = 0; j < nsubs; j++) {
-	printf("\t%s %.8f", token_to_string(subs[j].token), subs[j].logp);
-      }
-      printf("\n");
-    }
-  }
-  msg("free lm...");
-  lm_free(lm);
-  msg("free symtable...");
-  symtable_free();
-  msg("free dalloc space...");
-  dfreeall();
-  msg("calls=%d subs/call=%g pops/call=%g", 
-      fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
-#endif
