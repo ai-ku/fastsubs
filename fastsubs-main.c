@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
   symtable_free();
   msg("free dalloc space...");
   dfreeall();
-  msg("calls=%d subs/call=%g pops/call=%g", 
-      fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
+  //msg("calls=%d subs/call=%g pops/call=%g", 
+  //fs_ncall, (double)fs_nsubs/fs_ncall, (double)fs_niter/fs_ncall);
+  msg("done");
 }
