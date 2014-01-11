@@ -1,11 +1,30 @@
+2014-01-12  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* test27.log: Using OMP_NUM_THREADS=30 on balina finished wsj in
+	23m instead of 4h45m.  Output identical.
+
+2014-01-11  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* fastsubs-omp.c: OpenMP multithreaded version.  Tests with
+	test.lm4.gz and the top 3000 sentences of wsj show that the time
+	to complete fastsubs is 11 + 144/P where P is the number of
+	threads up to about P=24.  After 24 there is no benefit in
+	increasing the number of threads and after 40 the performance
+	starts to deteriorate.  At the best time of 17 secs, about 9 secs
+	is spent on things outside of fastsubs, i.e. read, write, alloc,
+	free.  Note that memory accounting does not work because of the
+	global variable _d_memsize.  Turning off memory accounting if
+	NDEBUG.
+
 2014-01-09  Deniz Yuret  <dyuret@ku.edu.tr>
 
 	* test26.out: Ran it on the whole wsj dataset.  Checked for
 	unordered substitutes using test26-check.pl.  None detected.
 	Checked the old wsj.sub.gz.  31 lines have unordered substitutes
 	(saved in test26.unordered).  There are a total of 66 lines that
-	differ between the two files after normalization.  TODO: lm_free
-	does not seem to get back to 0 memory in lm-test.c.
+	differ between the two files after normalization.  DONE: lm_free
+	does not seem to get back to 0 memory in lm-test.c.  It turns out
+	strhash was not getting freed.
 
 2014-01-05  Deniz Yuret  <dyuret@ku.edu.tr>
 
