@@ -18,12 +18,16 @@ typedef Token *Sentence;
 extern Token SOS, EOS, UNK;
 
 /** sentence_from_string(): The st array should be pre-allocated to
- * hold nmax+1 elements.  Words that are not already defined are
- * replaced with <unk>.  Since we use a single hash for the vocabulary
- * this only works if there is a single lm loaded before the first
- * call to sentence_from_string.  The last argument (if not NULL) is
- * for storing the original strings for the words.  Returns number of
- * tokens.
+ * hold nmax+1 elements.  st[0] holds the word count, st[1]=SOS,
+ * st[n]=EOS, and st[2..(n-1)] are the words.  SOS and EOS are added
+ * by sentence_from_string, if they exist in the original input those
+ * are ignored.  Words that are not already defined are replaced with
+ * <unk>.  Since we use a single hash for the vocabulary this only
+ * works if there is a single lm loaded before the first call to
+ * sentence_from_string.  The last argument (if not NULL) is for
+ * storing the original strings for the words including SOS and EOS.
+ * Returns number of tokens including SOS and EOS (also stored in
+ * st[0]).
  */
 uint32_t sentence_from_string(Sentence st, char *str, int nmax, char **w);
 
