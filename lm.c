@@ -37,12 +37,12 @@ LM lm_init(const char *lmfile) {
   lm->bheap = _nh_new(0);
   lm->order = 0;
   lm->nvocab = 0;
-  msg("lm_init: reading %s...", lmfile);
+  dbg("lm_init: reading %s...", lmfile);
   lm_read(lm, lmfile);
-  msg("lm_init: initializing heaps...");
+  dbg("lm_init: initializing heaps...");
   lm_pheap_init(lm);
   lm_bheap_init(lm);
-  msg("lm_init done: NF=%zu logP=%zu/%zu logB=%zu/%zu NH=%zu pheap=%zu/%zu bheap=%zu/%zu", 
+  dbg("lm_init done: NF=%zu logP=%zu/%zu logB=%zu/%zu NH=%zu pheap=%zu/%zu bheap=%zu/%zu", 
       sizeof(struct NFS), len(lm->phash), cap(lm->phash), len(lm->bhash), cap(lm->bhash),
       sizeof(struct NHS), len(lm->pheap), cap(lm->pheap), len(lm->bheap), cap(lm->bheap)
       );
@@ -150,7 +150,7 @@ static void lm_read(LM lm, const char *lmfile) {
 }
 
 static void lm_pheap_init(LM lm) {
-  msg("count logP");
+  dbg("count logP");
   forhash (NF, nf, lm->phash, d_keyisnull) {
     Ngram ng = nf->key;
     for (int i = ngram_size(ng); i > 0; i--) {
@@ -162,7 +162,7 @@ static void lm_pheap_init(LM lm) {
     }
   }
 
-  msg("alloc logP_heap");
+  dbg("alloc logP_heap");
   forhash (NH, nh, lm->pheap, d_keyisnull) {
     size_t n = ((size_t) nh->val);
     Heap heap = dalloc(sizeof(Hpair) * (1 + n));
@@ -170,7 +170,7 @@ static void lm_pheap_init(LM lm) {
     nh->val = heap;
   }
 
-  msg("insert logP");
+  dbg("insert logP");
   forhash (NF, nf, lm->phash, d_keyisnull) {
     Ngram ng = nf->key;
     float f = nf->val;
@@ -183,7 +183,7 @@ static void lm_pheap_init(LM lm) {
     }
   }
 
-  msg("sort logP_heap");
+  dbg("sort logP_heap");
   forhash (NH, nh, lm->pheap, d_keyisnull) {
     Heap heap = nh->val;
     assert(heap != NULL && heap_size(heap) > 0);
@@ -192,7 +192,7 @@ static void lm_pheap_init(LM lm) {
 }
 
 static void lm_bheap_init(LM lm) {
-  msg("count logB");
+  dbg("count logB");
   forhash (NF, nf, lm->bhash, d_keyisnull) {
     Ngram ng = nf->key;
     float f = nf->val;
@@ -206,7 +206,7 @@ static void lm_bheap_init(LM lm) {
     }
   }
 
-  msg("alloc logB_heap");
+  dbg("alloc logB_heap");
   forhash (NH, nh, lm->bheap, d_keyisnull) {
     size_t n = ((size_t) nh->val);
     Heap heap = dalloc(sizeof(Hpair) * (1 + n));
@@ -214,7 +214,7 @@ static void lm_bheap_init(LM lm) {
     nh->val = heap;
   }
 
-  msg("insert logB");
+  dbg("insert logB");
   forhash (NF, nf, lm->bhash, d_keyisnull) {
     Ngram ng = nf->key;
     float f = nf->val;
@@ -228,7 +228,7 @@ static void lm_bheap_init(LM lm) {
     }
   }
 
-  msg("sort logB_heap");
+  dbg("sort logB_heap");
   forhash (NH, nh, lm->bheap, d_keyisnull) {
     Heap heap = nh->val;
     assert(heap != NULL && heap_size(heap) > 0);
