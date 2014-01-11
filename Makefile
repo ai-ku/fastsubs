@@ -1,6 +1,7 @@
 CC=gcc
-CFLAGS=-O3 -save-temps -D_GNU_SOURCE -Wall -std=c99 -pedantic
-LIBS=-lm -lz
+CFLAGS=-O3 -DNDEBUG -D_GNU_SOURCE -Wall -std=c99 -pedantic
+#CFLAGS=-O3 -save-temps -D_GNU_SOURCE -Wall -std=c99 -pedantic
+LIBS=-lm
 TARGETS=fastsubs fastsubs-omp fastsubs-test lmheap-test lm-test sentence-test wordsub
 
 all: ${TARGETS}
