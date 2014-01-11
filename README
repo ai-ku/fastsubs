@@ -27,13 +27,23 @@ versions of the code and the paper assumed that the log back-off
 weights were upper bounded by 0 which they are not.  In my standard
 test of generating the top 100 substitutes for all the 1,222,974
 positions in the PTB, this caused a total of 66 low probability
-substitutes to be missed and 31 to be listed out of order.
+substitutes to be missed and 31 to be listed out of order.  Finally a
+multithreaded version, fastsubs-omp is implemented.  The number of
+threads can be controlled using the environment variable
+OMP_NUM_THREADS.
 
 Other test and utility executables that can be built using the
 Makefile:
 
+* fastsubs-omp: Multithreaded version.
+
 * wordsub: Takes the output of fastsubs and samples random substitutes
   for each word.
+
+* normalize-subs.pl: Takes fastsubs output and converts the
+  unnormalized log10(p) entries to normalized p entries that add up to
+  1.0 (which may not be accurate if fastsubs did not output the whole
+  vocabulary.)
 
 * fastsubs-test: Takes a model file and interactively runs fastsubs on
   sentences typed by the user.
@@ -50,7 +60,3 @@ Makefile:
   reading n-grams from the user and printing out their logp and
   back-off weights.
 
-* normalize-subs.pl: Takes fastsubs output and converts the
-  unnormalized log10(p) entries to normalized p entries that add up to
-  1.0 (which may not be accurate if fastsubs did not output the whole
-  vocabulary.)
