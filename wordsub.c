@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 	last = tok;
       } else {
 	double logp = atof(tok);
-	double p = exp10(logp);
+	double p = pow(10.0, logp);
 	sum += p;
 	if (sum * rand() / RAND_MAX <= p) {
 	  sub = last;

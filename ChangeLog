@@ -1,3 +1,14 @@
+2014-02-07    <dyuret@ku.edu.tr>
+
+	* Makefile: Trying to make things more standards compliant.
+	- Pure c99 does not support: getopt, popen, exp10, strdup, getline.
+	getopt(): _POSIX_C_SOURCE >= 2 || _XOPEN_SOURCE
+	popen(), pclose(): _POSIX_C_SOURCE >= 2 || _XOPEN_SOURCE || _BSD_SOURCE || _SVID_SOURCE
+	exp10(): _GNU_SOURCE
+	strdup(): _SVID_SOURCE || _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _XOPEN_SOURCE && _XOPEN_SOURCE_EXTENDED || /* Since glibc 2.12: */ _POSIX_C_SOURCE >= 200809L
+	getline(): /* Since glibc 2.10: */ _POSIX_C_SOURCE >= 200809L || _XOPEN_SOURCE >= 700 /* Before glibc 2.10: */ _GNU_SOURCE
+
+
 2014-01-12  Deniz Yuret  <dyuret@ku.edu.tr>
 
 	* test27.log: Using OMP_NUM_THREADS=30 on balina finished wsj in

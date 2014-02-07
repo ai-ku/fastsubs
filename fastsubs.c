@@ -391,7 +391,7 @@ u32 fastsubs(Hpair *subs, Sentence s, u32 target, LM lm, double plimit, u32 nlim
     bool nlimit_ok = (nsubs >= nlimit);
     bool plimit_ok = false;
     if (plimit < 1.0) {
-      double lastp = exp10(hpop.logp);
+      double lastp = pow(10.0, hpop.logp);
       psum += lastp;
       double maxrest = lastp * (nvocab - nsubs);
       plimit_ok = (plimit <= (psum/(psum + maxrest)));

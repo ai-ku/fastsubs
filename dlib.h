@@ -10,9 +10,9 @@
    -D_GNU_SOURCE. */
 
 #define D_HAVE_POPEN 1
-#define D_HAVE_GETLINE 1
-#define D_HAVE_PROC 1
-#define D_HAVE_MUSABLE 1
+#define D_HAVE_GETLINE 0
+#define D_HAVE_PROC 0
+#define D_HAVE_MUSABLE 0
 
 /* Standard C99 includes */
 
