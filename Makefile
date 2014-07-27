@@ -63,6 +63,12 @@ wordsub: wordsub.o dlib.o
 
 wordsub.o: wordsub.c dlib.h
 	$(CC) -c $(CFLAGS) $< -o $@
+	
+wordsub-n: wordsub-n.o dlib.o
+        $(CC) $(CFLAGS) $^ $(LIBS) -o $@
+
+wordsub-n.o: wordsub-n.c dlib.h
+        $(CC) -c $(CFLAGS) $< -o $@
 
 dlib.o: dlib.c dlib.h
 	$(CC) -c $(CFLAGS) $< -o $@
