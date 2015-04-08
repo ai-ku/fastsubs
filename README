@@ -32,6 +32,21 @@ multithreaded version, fastsubs-omp is implemented.  The number of
 threads can be controlled using the environment variable
 OMP_NUM_THREADS.
 
+fastsubs-omp can be used with a few additional run-time options:
+
+Usage: fastsubs-omp [-n <n> | -p <p> | -m <max-threads> | -t | -z ] model.lm[.gz] < input.txt
+
+-m specifies the maximum number of threads that can be used
+-z specifies that the output probability values would be normalized probabilities that sum up to 1 (instead of the default unnormalized log probabilities)
+-t specifies a one-target-per-text-line input format (instead of the default free text format). 
+In this format every input line is: 
+target_name <tab> target_id <tab> target_index <tab> text_line 
+Then for every input line fastsubs-omp outputs two lines:
+1) the input line
+2) substitutes for the text_line[target_index] (i.e. the word in the target_index position in text_line) in the format:
+sub1 <space> lprob1 <tab> sub2 <space> lprob2 <tab> ...
+
+
 Other test and utility executables that can be built using the
 Makefile:
 
