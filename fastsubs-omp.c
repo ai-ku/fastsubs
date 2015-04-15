@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <omp.h>
+#include <math.h>
+#include <string.h>
 #include "fastsubs.h"
 #include "heap.h"
 #include "lm.h"
@@ -95,25 +97,10 @@ static void sent_process(sent_t s, LM lm, u32 opt_n, double opt_p) {
   }
 }
 
-static void sent_write(sent_t s) {
+static void subs_write(Heap subs, int normalize_prob) {
+	u32 nsubs = heap_size(subs);
 
-	if (s->target_index == -1) {
-		u32 ssize = sentence_size(s->sent);
-		for (u32 i = 2; i <= ssize; i++) {
-			fputs(s->wstr[i], stdout);
-			Heap subs = s->subs[i];
-			u32 nsubs = heap_size(subs);
-			for (u32 j = 1; j <= nsubs; j++) {
-				// TODO: why is this .8f?
-				printf("\t%s %.8f", token_to_string(subs[j].token), subs[j].logp);
-			}
-			putchar('\n');
-		}
-	} else { // one target per sentence
-		printf("%s", s->sent_record_buf);
-		Heap subs = s->subs[s->target_index];
-		u32 nsubs = heap_size(subs);
-
+	if (normalize_prob == 1) {
 		double norm = 0.0;
 		for (int j = 1; j <= nsubs; j++) {
 			norm += pow(10, subs[j].logp);
@@ -122,21 +109,46 @@ static void sent_write(sent_t s) {
 			double prob = pow(10, subs[j].logp)/norm;
 			if (prob < 0.00000001)
 				break;
-			printf("%s %.8f\t", token_to_string(subs[j].token), prob);
-//			printf("\t%s %.8f", token_to_string(subs[j].token), subs[j].logp);
+			if (j>1) putchar('\t');
+			printf("%s %.8f", token_to_string(subs[j].token), prob);
+
 		}
+	} else {
+		for (int j = 1; j <= nsubs; j++) {
+			if (j>1) putchar('\t');
+			printf("%s %.8f", token_to_string(subs[j].token), subs[j].logp);
+		}
+	}
+}
+
+static void sent_write(sent_t s, int normalize_prob) {
+
+	if (s->target_index == -1) {
+		u32 ssize = sentence_size(s->sent);
+		for (u32 i = 2; i <= ssize; i++) {
+			fputs(s->wstr[i], stdout);
+			putchar('\t');
+			Heap subs = s->subs[i];
+			subs_write(subs, normalize_prob);
+			putchar('\n');
+		}
+	} else { // one target per sentence
+		printf("%s", s->sent_record_buf);
+		Heap subs = s->subs[s->target_index];
+		subs_write(subs, normalize_prob);
 		putchar('\n');
 	}
 }
 
 int main(int argc, char **argv) {
-  const char *usage = "Usage: fastsubs-omp [-n <n> | -p <p> | -m <max-threads> | -t ] model.lm[.gz] < input.txt\n";
+  const char *usage = "Usage: fastsubs-omp [-n <n> | -p <p> | -m <max-threads> | -t | -z ] model.lm[.gz] < input.txt\n";
   int opt;
   uint32_t opt_n = NMAX;
   double opt_p = PMAX;
   int opt_max_threads = -1;
   int one_target_per_sentence = 0;
-  while ((opt = getopt(argc, argv, "p:n:m:t")) != -1) {
+  int normalize_prob = 0;
+  while ((opt = getopt(argc, argv, "p:n:m:tz")) != -1) {
     switch(opt) {
     case 'n':
       opt_n = atoi(optarg);
@@ -150,6 +162,10 @@ int main(int argc, char **argv) {
     case 't':
       one_target_per_sentence = 1;
       break;
+    case 'z':
+      normalize_prob = 1;
+      break;
+    break;
     default:
       die("%s", usage);
     }
@@ -180,7 +196,7 @@ int main(int argc, char **argv) {
       sent_process(&s[i], lm, opt_n, opt_p);
     }
     for (int i = 0; i < nsent; i++) {
-      sent_write(&s[i]);
+      sent_write(&s[i], normalize_prob);
     }
 #pragma omp parallel for
     for (int i = 0; i < nsent; i++) {
